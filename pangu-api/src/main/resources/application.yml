@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: pangu-api
+  jpa:
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  config:
+    import: file:/opt/conf/pangu/application.properties
