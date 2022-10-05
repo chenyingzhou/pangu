@@ -87,7 +87,7 @@ object EntityHolder {
             if (!entityMap.containsKey(entityClass)) {
                 entityMap[entityClass] = HashMap()
             }
-            entityMap[entityClass]!![entity.id!!] = entity
+            entityMap[entityClass]!![entity.id] = entity
         }
     }
 

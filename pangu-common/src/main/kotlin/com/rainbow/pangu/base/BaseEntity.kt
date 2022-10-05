@@ -12,7 +12,7 @@ abstract class BaseEntity {
         nullable = false,
         columnDefinition = "int COMMENT 'ID'"
     )
-    open var id: Int? = null
+    open var id: Int = 0
 
     @Column(
         nullable = false,

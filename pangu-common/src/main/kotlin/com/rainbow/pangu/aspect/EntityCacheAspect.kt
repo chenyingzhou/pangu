@@ -45,13 +45,13 @@ class EntityCacheAspect {
         when (signature.method.name) {
             "save" -> {
                 val entity = joinPoint.proceed() as BaseEntity
-                EntityHolder.deleteCache(entityClass, listOf(entity.id!!))
+                EntityHolder.deleteCache(entityClass, listOf(entity.id))
                 return entity
             }
 
             "saveAll" -> {
                 val entities = joinPoint.proceed() as List<*>
-                EntityHolder.deleteCache(entityClass, entities.map { (it as BaseEntity).id!! })
+                EntityHolder.deleteCache(entityClass, entities.map { (it as BaseEntity).id })
                 return entities
             }
 
@@ -96,14 +96,14 @@ class EntityCacheAspect {
             }
 
             "delete" -> {
-                EntityHolder.deleteCache(entityClass, listOf((arg as BaseEntity).id!!))
+                EntityHolder.deleteCache(entityClass, listOf((arg as BaseEntity).id))
                 return joinPoint.proceed()
             }
 
             "deleteAll" -> {
                 val deleteIds: MutableList<Int> = ArrayList()
                 for (baseEntity in arg as Iterable<*>) {
-                    deleteIds.add((baseEntity as BaseEntity).id!!)
+                    deleteIds.add((baseEntity as BaseEntity).id)
                 }
                 EntityHolder.deleteCache(entityClass, deleteIds)
                 return joinPoint.proceed()
