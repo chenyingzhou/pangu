@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 @Aspect
 @Component
 class EntityCacheAspect {
-    private val repoEntityClassMap: MutableMap<BaseRepo<*>, KClass<BaseEntity>> = ConcurrentHashMap()
+    private val repoEntityClassMap: MutableMap<BaseRepo<*>, KClass<out BaseEntity>> = ConcurrentHashMap()
 
     @Around("@annotation(entityCache)")
     @Throws(Throwable::class)
@@ -26,13 +26,13 @@ class EntityCacheAspect {
         // 获取参数，且不处理无参数方法
         val arg = (if (joinPoint.args.isNotEmpty()) joinPoint.args[0] else null) ?: return joinPoint.proceed()
         // 获取实体类
-        val entityClass: KClass<BaseEntity> = try {
+        val entityClass: KClass<out BaseEntity> = try {
             val repo = AopContext.currentProxy() as BaseRepo<*>
             if (!repoEntityClassMap.containsKey(repo)) {
                 synchronized(repo) {
                     if (!repoEntityClassMap.containsKey(repo)) {
                         val entity = repo.findAll(Pageable.ofSize(1)).content[0]
-                        repoEntityClassMap[repo] = entity::class as KClass<BaseEntity>
+                        repoEntityClassMap[repo] = entity::class as KClass<out BaseEntity>
                     }
                 }
             }

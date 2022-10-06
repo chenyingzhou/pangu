@@ -48,14 +48,14 @@ object EntityHolder {
     /**
      * 获取entity
      */
-    fun <T : BaseEntity> find(entityClass: KClass<T>, ids: Iterable<Int>): MutableList<T> {
-        val entities: MutableList<T> = ArrayList()
+    fun find(entityClass: KClass<out BaseEntity>, ids: Iterable<Int>): MutableList<BaseEntity> {
+        val entities: MutableList<BaseEntity> = ArrayList()
         val missedIds: MutableSet<Int> = HashSet()
         // 从内存获取
         val entityMap = holder.get()
         for (id in ids) {
             if (entityMap.containsKey(entityClass) && entityMap[entityClass]!!.containsKey(id)) {
-                entities.add(entityMap[entityClass]!![id] as T)
+                entities.add(entityMap[entityClass]!![id]!!)
             } else {
                 missedIds.add(id)
             }
@@ -75,7 +75,7 @@ object EntityHolder {
     /**
      * 暂存entity
      */
-    private fun <T : BaseEntity> store(entityClass: KClass<T>, entities: Iterable<T>) {
+    private fun store(entityClass: KClass<out BaseEntity>, entities: Iterable<BaseEntity>) {
         if (!enable.get()) {
             return
         }
@@ -94,7 +94,7 @@ object EntityHolder {
     /**
      * 保存缓存并暂存entity
      */
-    fun <T : BaseEntity> saveCache(entityClass: KClass<T>, entities: Iterable<T>) {
+    fun saveCache(entityClass: KClass<out BaseEntity>, entities: Iterable<BaseEntity>) {
         store(entityClass, entities)
         EntityCacheManager.store(entityClass, entities)
     }
@@ -102,7 +102,7 @@ object EntityHolder {
     /**
      * 删除缓存(如果开启了thread holder，则会延迟删除)
      */
-    fun <T : BaseEntity> deleteCache(entityClass: KClass<T>, ids: Iterable<Int>) {
+    fun deleteCache(entityClass: KClass<out BaseEntity>, ids: Iterable<Int>) {
         if (!enable.get()) {
             EntityCacheManager.delete(entityClass, ids)
             return
@@ -120,7 +120,7 @@ object EntityHolder {
         /**
          * 从缓存获取entity
          */
-        fun <T : BaseEntity> find(entityClass: KClass<T>, ids: Iterable<Int>): List<T> {
+        fun find(entityClass: KClass<out BaseEntity>, ids: Iterable<Int>): List<BaseEntity> {
             val keys: MutableList<String> = ArrayList()
             ids.forEach { keys.add(KeyTemplate.ENTITY.fill(entityClass.simpleName, it.toString())) }
             return RedisUtil.getMulti(keys, entityClass)
@@ -129,8 +129,8 @@ object EntityHolder {
         /**
          * 缓存entity
          */
-        fun <T : BaseEntity> store(entityClass: KClass<T>, entities: Iterable<T>) {
-            val map: MutableMap<String, T> = HashMap()
+        fun store(entityClass: KClass<out BaseEntity>, entities: Iterable<BaseEntity>) {
+            val map: MutableMap<String, BaseEntity> = HashMap()
             entities.forEach {
                 val cacheKey = KeyTemplate.ENTITY.fill(entityClass.simpleName, it.id.toString())
                 map[cacheKey] = it
@@ -141,7 +141,7 @@ object EntityHolder {
         /**
          * 删除entity缓存
          */
-        fun <T : BaseEntity> delete(entityClass: KClass<T>, ids: Iterable<Int>) {
+        fun delete(entityClass: KClass<out BaseEntity>, ids: Iterable<Int>) {
             val keys: MutableList<String> = ArrayList()
             ids.forEach { keys.add(KeyTemplate.ENTITY.fill(entityClass.simpleName, it.toString())) }
             RedisUtil.del(keys)
