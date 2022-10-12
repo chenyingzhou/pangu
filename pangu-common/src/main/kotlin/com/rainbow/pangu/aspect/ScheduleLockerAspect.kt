@@ -22,7 +22,7 @@ class ScheduleLockerAspect {
         val className = joinPoint.signature.declaringTypeName
         val methodName = joinPoint.signature.name
         val timeout = scheduleLocker.timeout
-        val lockKey = String.format("TASK_LOCKER:%s:%s", className, methodName)
+        val lockKey = "TASK_LOCKER:$className:$methodName"
         val locked = LockUtil.lock(lockKey, timeout)
         return if (!locked) {
             null

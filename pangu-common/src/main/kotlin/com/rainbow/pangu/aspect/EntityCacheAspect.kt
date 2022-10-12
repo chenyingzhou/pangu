@@ -25,43 +25,40 @@ class EntityCacheAspect {
     fun entityCacheAround(joinPoint: ProceedingJoinPoint, entityCache: EntityCache): Any? {
         // 获取参数，且不处理无参数方法
         val arg = (if (joinPoint.args.isNotEmpty()) joinPoint.args[0] else null) ?: return joinPoint.proceed()
-        // 获取实体类
-        val entityClass: KClass<out BaseEntity> = try {
-            val repo = AopContext.currentProxy() as BaseRepo<*>
-            if (!repoEntityClassMap.containsKey(repo)) {
-                synchronized(repo) {
-                    if (!repoEntityClassMap.containsKey(repo)) {
-                        val entity = repo.findAll(Pageable.ofSize(1)).content[0]
-                        repoEntityClassMap[repo] = entity::class as KClass<out BaseEntity>
-                    }
-                }
-            }
-            repoEntityClassMap[repo]!!
-        } catch (_: Throwable) {
-            return joinPoint.proceed()
-        }
         // 使用缓存
+        val repo = AopContext.currentProxy() as BaseRepo<*>
         val signature = joinPoint.signature as MethodSignature
         when (signature.method.name) {
             "save" -> {
                 val entity = joinPoint.proceed() as BaseEntity
+                val entityClass = entity::class
+                putEntityClass(repo, entityClass)
                 EntityHolder.deleteCache(entityClass, listOf(entity.id))
                 return entity
             }
 
             "saveAll" -> {
                 val entities = joinPoint.proceed() as List<*>
-                EntityHolder.deleteCache(entityClass, entities.map { (it as BaseEntity).id })
+                if (entities.isNotEmpty()) {
+                    val entityClass = (entities[0]!! as BaseEntity)::class
+                    putEntityClass(repo, entityClass)
+                    EntityHolder.deleteCache(entityClass, entities.map { (it as BaseEntity).id })
+                }
                 return entities
             }
 
             "findById" -> {
-                val entities: List<BaseEntity> = EntityHolder.find(entityClass, listOf(arg as Int))
-                if (entities.isNotEmpty()) {
-                    return Optional.of(entities[0])
+                var entityClass = repoEntityClassMap[repo]
+                if (entityClass != null) {
+                    val entities: List<BaseEntity> = EntityHolder.find(entityClass, listOf(arg as Int))
+                    if (entities.isNotEmpty()) {
+                        return Optional.of(entities[0])
+                    }
                 }
                 val optEntity = joinPoint.proceed() as Optional<*>
                 if (optEntity.isPresent) {
+                    entityClass = (optEntity.get() as BaseEntity)::class
+                    putEntityClass(repo, entityClass)
                     EntityHolder.saveCache(entityClass, listOf(optEntity.get() as BaseEntity))
                 }
                 return optEntity
@@ -69,46 +66,90 @@ class EntityCacheAspect {
 
             "findAllById" -> {
                 val ids = (arg as Iterable<*>).map { it as Int }
-                val entities = EntityHolder.find(entityClass, ids)
+                var entityClass = repoEntityClassMap[repo]
+                val entities = if (entityClass != null) EntityHolder.find(entityClass, ids) else ArrayList()
                 val foundIds = entities.map { it.id }
                 val missedIds = ids - foundIds.toSet()
                 val missedEntities = (joinPoint.proceed(arrayOf<Any>(missedIds)) as List<*>).map { it as BaseEntity }
-                EntityHolder.saveCache(entityClass, missedEntities)
                 entities.addAll(missedEntities)
+                if (entityClass == null && entities.isNotEmpty()) {
+                    entityClass = entities[0]::class
+                    putEntityClass(repo, entityClass)
+                }
+                if (entityClass != null) {
+                    EntityHolder.saveCache(entityClass, missedEntities)
+                }
                 // 若传入ids是列表，返回结果按传入id顺序排序
                 entities.sortWith(Comparator.comparingInt { ids.indexOf(it.id) })
                 return entities
             }
 
             "existsById" -> {
-                val entity = (AopContext.currentProxy() as BaseRepo<*>).findById((arg as Int)).orElse(null)
+                val entity = repo.findById((arg as Int)).orElse(null)
                 return entity != null
             }
 
             "deleteById" -> {
-                EntityHolder.deleteCache(entityClass, listOf(arg as Int))
+                EntityHolder.deleteCache(getEntityClassUngracefully(repo), listOf(arg as Int))
                 return joinPoint.proceed()
             }
 
             "deleteAllById" -> {
-                EntityHolder.deleteCache(entityClass, (arg as Iterable<*>).map { it as Int })
+                EntityHolder.deleteCache(getEntityClassUngracefully(repo), (arg as Iterable<*>).map { it as Int })
                 return joinPoint.proceed()
             }
 
             "delete" -> {
-                EntityHolder.deleteCache(entityClass, listOf((arg as BaseEntity).id))
+                val entity = arg as BaseEntity
+                putEntityClass(repo, entity::class)
+                EntityHolder.deleteCache(entity::class, listOf(entity.id))
                 return joinPoint.proceed()
             }
 
             "deleteAll" -> {
                 val deleteIds: MutableList<Int> = ArrayList()
-                for (baseEntity in arg as Iterable<*>) {
-                    deleteIds.add((baseEntity as BaseEntity).id)
+                val entities = arg as Iterable<*>
+                var entityClass = repoEntityClassMap[repo]
+                for (baseEntity in entities) {
+                    val entity = baseEntity as BaseEntity
+                    deleteIds.add(entity.id)
+                    if (entityClass == null) {
+                        entityClass = entity::class
+                        putEntityClass(repo, entityClass)
+                    }
                 }
-                EntityHolder.deleteCache(entityClass, deleteIds)
+                entityClass?.let { EntityHolder.deleteCache(it, deleteIds) }
                 return joinPoint.proceed()
             }
         }
         return joinPoint.proceed()
+    }
+
+    /**
+     * 存储repo->entityClass
+     */
+    private fun putEntityClass(repo: BaseRepo<*>, entityClass: KClass<out BaseEntity>) {
+        if (!repoEntityClassMap.containsKey(repo)) {
+            synchronized(repo) {
+                if (!repoEntityClassMap.containsKey(repo)) {
+                    repoEntityClassMap[repo] = entityClass
+                }
+            }
+        }
+    }
+
+    /**
+     * 无法根据参数或返回值确定entityClass时，以该方式获取
+     */
+    private fun getEntityClassUngracefully(repo: BaseRepo<*>): KClass<out BaseEntity> {
+        if (!repoEntityClassMap.containsKey(repo)) {
+            synchronized(repo) {
+                if (!repoEntityClassMap.containsKey(repo)) {
+                    val entity = repo.findAll(Pageable.ofSize(1)).content[0]
+                    repoEntityClassMap[repo] = entity::class as KClass<out BaseEntity>
+                }
+            }
+        }
+        return repoEntityClassMap[repo]!!
     }
 }
