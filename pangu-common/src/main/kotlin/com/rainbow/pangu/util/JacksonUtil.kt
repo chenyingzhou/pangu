@@ -20,6 +20,9 @@ object JacksonUtil {
     }
 
     fun <T : Any> toObject(jsonStr: String, clazz: KClass<T>): T? {
+        if (clazz == String::class) {
+            return jsonStr as T
+        }
         return try {
             threadLocal.get().readValue(jsonStr, clazz.java)
         } catch (e: Exception) {
@@ -51,18 +54,13 @@ object JacksonUtil {
     }
 
     fun toJson(obj: Any): String {
+        if (obj is String) {
+            return obj
+        }
         return try {
             threadLocal.get().writeValueAsString(obj)
         } catch (e: Exception) {
             ""
-        }
-    }
-
-    fun toByte(obj: Any): ByteArray {
-        return try {
-            threadLocal.get().writeValueAsBytes(obj)
-        } catch (e: JsonProcessingException) {
-            byteArrayOf()
         }
     }
 }

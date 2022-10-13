@@ -1,7 +1,14 @@
 package com.rainbow.pangu.util
 
-object EnvUtil {
-    private val env = System.getProperties().getProperty("env", "test").lowercase()
+import org.springframework.beans.factory.BeanFactory
+import org.springframework.beans.factory.BeanFactoryAware
+import org.springframework.core.env.Environment
+import org.springframework.stereotype.Component
+
+@Component
+object EnvUtil : BeanFactoryAware {
+
+    private lateinit var env: String
 
     val isProd: Boolean
         get() {
@@ -15,4 +22,9 @@ object EnvUtil {
         get() {
             return "dev" == env
         }
+
+    override fun setBeanFactory(beanFactory: BeanFactory) {
+        env = beanFactory.getBean(Environment::class.java).getProperty("env", "test").lowercase()
+    }
+
 }

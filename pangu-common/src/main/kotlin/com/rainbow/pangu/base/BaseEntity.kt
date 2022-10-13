@@ -55,4 +55,9 @@ abstract class BaseEntity {
     override fun hashCode(): Int {
         return javaClass.hashCode()
     }
+
+    override fun toString(): String {
+        return "BaseEntity(id=$id, deleted=$deleted, version=$version, createdTime=$createdTime, updatedTime=$updatedTime)"
+    }
+
 }

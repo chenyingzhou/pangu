@@ -6,19 +6,20 @@ import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 @Component
-class SpringContextUtil : ApplicationContextAware {
+object SpringContextUtil : ApplicationContextAware {
+
+    private lateinit var applicationContext: ApplicationContext
+
     override fun setApplicationContext(applicationContext: ApplicationContext) {
-        Companion.applicationContext = applicationContext
+        this.applicationContext = applicationContext
     }
 
-    companion object {
-        private lateinit var applicationContext: ApplicationContext
-        fun <T> getBean(clazz: Class<T>): T {
-            return applicationContext.getBean(clazz)
-        }
-
-        fun <T : Any> getBean(clazz: KClass<T>): T {
-            return applicationContext.getBean(clazz.java)
-        }
+    fun <T> getBean(clazz: Class<T>): T {
+        return applicationContext.getBean(clazz)
     }
+
+    fun <T : Any> getBean(clazz: KClass<T>): T {
+        return applicationContext.getBean(clazz.java)
+    }
+
 }
