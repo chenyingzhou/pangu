@@ -127,6 +127,7 @@ class UserService {
             if (code != sentCode) {
                 throw BizException("验证码不正确")
             }
+            RedisUtil.del(smsCodeKey)
         }
         userPassword.apply {
             this.type = UserPassword.Type.LOGIN
