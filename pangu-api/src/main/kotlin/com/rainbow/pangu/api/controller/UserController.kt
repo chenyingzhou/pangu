@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.ChangePasswordParam
+import com.rainbow.pangu.api.model.param.EditUserParam
 import com.rainbow.pangu.api.model.param.LoginParam
 import com.rainbow.pangu.api.model.param.SendSmsParam
 import com.rainbow.pangu.api.model.vo.UserVO
@@ -36,11 +37,19 @@ class UserController {
         return ResultBody.ok(userService.login(loginParam.phoneNo, loginParam.password, loginParam.code))
     }
 
-    @PostMapping("/user/info")
+    @GetMapping("/user/info")
     @Operation(summary = "用户信息")
     fun info(@Schema(description = "用户ID,获取自己时可不传") userId: Int?): ResultBody<UserVO> {
         val targetUserId = if (userId != null && userId > 0) userId else ClientInfoHolder.userId
         return ResultBody.ok(userService.info(targetUserId))
+    }
+
+    @PostMapping("/user/info")
+    @Operation(summary = "编辑个人信息")
+    @LoginCheck(lock = true)
+    fun edit(@RequestBody editUserParam: EditUserParam): ResultBody<Boolean> {
+        editUserParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(userService.edit(editUserParam))
     }
 
     @GetMapping("/user/password")

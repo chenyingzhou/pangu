@@ -1,6 +1,7 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.ChangePasswordParam
+import com.rainbow.pangu.api.model.param.EditUserParam
 import com.rainbow.pangu.api.model.vo.UserVO
 import com.rainbow.pangu.api.model.vo.converter.UserVOConv
 import com.rainbow.pangu.constant.KeyTemplate
@@ -97,9 +98,27 @@ class UserService {
         return token
     }
 
+    /**
+     * 获取用户信息
+     */
     fun info(userId: Int): UserVO {
         val user = userRepo.findById(userId).orElseGet { User() }
         return UserVOConv.fromEntity(user)
+    }
+
+    /**
+     * 编辑用户信息
+     */
+    fun edit(editUserParam: EditUserParam): Boolean {
+        val user = userRepo.findById(editUserParam.userId).orElseThrow()
+        user.let {
+            it.nickName = editUserParam.nickName.ifBlank { it.nickName }
+            it.avatar = editUserParam.avatar.ifBlank { it.avatar }
+            it.signature = editUserParam.signature.ifBlank { it.signature }
+            it.description = editUserParam.description.ifBlank { it.description }
+        }
+        userRepo.save(user)
+        return true
     }
 
     /**
@@ -128,7 +147,7 @@ class UserService {
             }
         } else {
             // 使用短信验证
-            val user = userRepo.findById(userId).orElseThrow { BizException("用户状态不正确") }
+            val user = userRepo.findById(userId).orElseThrow()
             val smsCodeKey = KeyTemplate.SMS_CODE.fill(user.phoneNo)
             val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
             if (code != sentCode) {

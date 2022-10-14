@@ -13,7 +13,8 @@ import javax.persistence.Index
 @SQLDelete(sql = "update `user` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "user", comment = "用户")
 @javax.persistence.Table(
-    name = "user", indexes = [
+    name = "user",
+    indexes = [
         Index(name = "idx_phone_no", columnList = "phoneNo", unique = true),
         Index(name = "idx_creator", columnList = "creator"),
     ]
