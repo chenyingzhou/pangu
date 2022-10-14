@@ -30,7 +30,7 @@ class UserController {
 
     @PostMapping("/user/login")
     @Operation(summary = "登录(密码和验证码二选一)")
-    fun sendSms(@RequestBody loginParam: LoginParam): ResultBody<String> {
+    fun login(@RequestBody loginParam: LoginParam): ResultBody<String> {
         return ResultBody.ok(userService.login(loginParam.phoneNo, loginParam.password, loginParam.code))
     }
 
