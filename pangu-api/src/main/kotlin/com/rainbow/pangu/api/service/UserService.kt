@@ -1,6 +1,8 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.ChangePasswordParam
+import com.rainbow.pangu.api.model.vo.UserVO
+import com.rainbow.pangu.api.model.vo.converter.UserVOConv
 import com.rainbow.pangu.constant.KeyTemplate
 import com.rainbow.pangu.entity.User
 import com.rainbow.pangu.entity.UserPassword
@@ -93,6 +95,11 @@ class UserService {
         val token = DigestUtils.md5DigestAsHex((user.id.toString() + System.currentTimeMillis()).toByteArray())
         RedisUtil.store(KeyTemplate.USER_TOKEN.fill(token) to user.id, 86400 * 7)
         return token
+    }
+
+    fun info(userId: Int): UserVO {
+        val user = userRepo.findById(userId).orElseGet { User() }
+        return UserVOConv.fromEntity(user)
     }
 
     /**
