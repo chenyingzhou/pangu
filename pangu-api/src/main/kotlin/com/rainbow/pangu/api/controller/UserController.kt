@@ -27,9 +27,10 @@ class UserController {
     lateinit var userService: UserService
 
     @PostMapping("/sms/code")
-    @Operation(summary = "发送验证码")
-    fun sendCode(@RequestBody sendSmsParam: SendSmsParam): ResultBody<Boolean> {
-        return ResultBody.ok(userService.sendCode(sendSmsParam.phoneNo))
+    @Operation(summary = "发送验证码(返回脱敏手机号)")
+    fun sendCode(@RequestBody sendSmsParam: SendSmsParam): ResultBody<String> {
+        val userId = ClientInfoHolder.userId
+        return ResultBody.ok(userService.sendCode(userId, sendSmsParam.phoneNo))
     }
 
     @PostMapping("/user/login")

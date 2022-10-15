@@ -29,9 +29,14 @@ class UserService {
     lateinit var userPasswordRepo: UserPasswordRepo
 
     /**
-     * 发送验证码
+     * 发送验证码，返回发送手机号(脱敏处理)
      */
-    fun sendCode(phoneNo: String): Boolean {
+    fun sendCode(userId: Int, phoneNo: String): String {
+        var realPhoneNo = phoneNo
+        // 若用户ID存在，则使用用户绑定的手机号
+        if (userId > 0) {
+            realPhoneNo = userRepo.findById(userId).orElseThrow().phoneNo
+        }
         val ip = ClientInfoHolder.ip
         val hour = System.currentTimeMillis() / 1000 / 3600
         val limitKey = KeyTemplate.SMS_IP_LIMIT.fill(hour, ip)
@@ -47,8 +52,8 @@ class UserService {
             (100000..999999).random().toString()
             // TODO 发送验证码
         }
-        RedisUtil.store(KeyTemplate.SMS_CODE.fill(phoneNo) to code, 60 * 5)
-        return true
+        RedisUtil.store(KeyTemplate.SMS_CODE.fill(realPhoneNo) to code, 60 * 5)
+        return realPhoneNo.substring(0, 3) + "****" + realPhoneNo.substring(7)
     }
 
     /**
