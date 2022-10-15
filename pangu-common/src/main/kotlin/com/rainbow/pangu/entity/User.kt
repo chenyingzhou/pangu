@@ -41,7 +41,7 @@ class User : BaseEntity() {
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '真实姓名'")
     var realName = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '一句话描述'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '个性签名'")
     var signature = ""
 
     override fun toString(): String {

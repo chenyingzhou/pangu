@@ -5,6 +5,7 @@ import com.rainbow.pangu.api.model.param.ChangePasswordParam
 import com.rainbow.pangu.api.model.param.EditUserParam
 import com.rainbow.pangu.api.model.param.LoginParam
 import com.rainbow.pangu.api.model.param.SendSmsParam
+import com.rainbow.pangu.api.model.vo.LoginVO
 import com.rainbow.pangu.api.model.vo.UserVO
 import com.rainbow.pangu.api.service.UserService
 import com.rainbow.pangu.base.ResultBody
@@ -33,7 +34,7 @@ class UserController {
 
     @PostMapping("/user/login")
     @Operation(summary = "登录(密码和验证码二选一)")
-    fun login(@RequestBody loginParam: LoginParam): ResultBody<String> {
+    fun login(@RequestBody loginParam: LoginParam): ResultBody<LoginVO> {
         return ResultBody.ok(userService.login(loginParam.phoneNo, loginParam.password, loginParam.code))
     }
 

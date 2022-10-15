@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.ChangePasswordParam
 import com.rainbow.pangu.api.model.param.EditUserParam
+import com.rainbow.pangu.api.model.vo.LoginVO
 import com.rainbow.pangu.api.model.vo.UserVO
 import com.rainbow.pangu.api.model.vo.converter.UserVOConv
 import com.rainbow.pangu.constant.KeyTemplate
@@ -53,7 +54,7 @@ class UserService {
     /**
      * 用户登录，可以选择密码或短信验证码
      */
-    fun login(phoneNo: String, password: String, code: String): String {
+    fun login(phoneNo: String, password: String, code: String): LoginVO {
         var user: User? = null
         // 验证码/密码任选其一
         if (code.isBlank() && password.isBlank()) {
@@ -95,7 +96,11 @@ class UserService {
         }
         val token = DigestUtils.md5DigestAsHex((user.id.toString() + System.currentTimeMillis()).toByteArray())
         RedisUtil.store(KeyTemplate.USER_TOKEN.fill(token) to user.id, 86400 * 7)
-        return token
+        return LoginVO().apply {
+            this.token = token
+            this.hasPassword = password.isNotBlank() || hasPassword(user.id, UserPassword.Type.LOGIN)
+            this.user = UserVOConv.fromEntity(user)
+        }
     }
 
     /**

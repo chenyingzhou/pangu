@@ -13,7 +13,7 @@ class EditUserParam {
     @Schema(description = "头像")
     var avatar = ""
 
-    @Schema(description = "一句话描述")
+    @Schema(description = "个性签名")
     var signature = ""
 
     @Schema(description = "个人描述")

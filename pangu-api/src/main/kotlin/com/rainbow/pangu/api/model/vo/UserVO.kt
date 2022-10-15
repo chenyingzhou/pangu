@@ -13,12 +13,12 @@ class UserVO {
     @Schema(description = "头像")
     var avatar = ""
 
+    @Schema(description = "个性签名")
+    var signature = ""
+
     @Schema(description = "个人描述")
     var description = ""
 
     @Schema(description = "是否为创造者")
     var creator = false
-
-    @Schema(description = "一句话描述")
-    var signature = ""
 }
