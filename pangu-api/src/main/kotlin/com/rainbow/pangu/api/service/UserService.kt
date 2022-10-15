@@ -145,25 +145,28 @@ class UserService {
         val newPassword = changePasswordParam.newPassword
 
         val userPassword = userPasswordRepo.findByTypeAndUserId(type, userId).orElse(UserPassword())
-        if (oldPassword.isNotBlank()) {
-            // 使用原密码验证
-            if (oldPassword != userPassword.password) {
-                throw BizException("原密码不正确")
+        // 若原来设置过密码，则需要验证
+        if (userPassword.id != 0) {
+            if (oldPassword.isNotBlank()) {
+                // 使用原密码验证
+                if (oldPassword != userPassword.password) {
+                    throw BizException("原密码不正确")
+                }
+            } else {
+                // 使用短信验证
+                val user = userRepo.findById(userId).orElseThrow()
+                val smsCodeKey = KeyTemplate.SMS_CODE.fill(user.phoneNo)
+                val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
+                if (code != sentCode) {
+                    throw BizException("验证码不正确")
+                }
+                RedisUtil.del(smsCodeKey)
             }
-        } else {
-            // 使用短信验证
-            val user = userRepo.findById(userId).orElseThrow()
-            val smsCodeKey = KeyTemplate.SMS_CODE.fill(user.phoneNo)
-            val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
-            if (code != sentCode) {
-                throw BizException("验证码不正确")
-            }
-            RedisUtil.del(smsCodeKey)
         }
-        userPassword.apply {
-            this.type = UserPassword.Type.LOGIN
-            this.userId = userId
-            this.password = newPassword
+        userPassword.let {
+            it.type = UserPassword.Type.LOGIN
+            it.userId = userId
+            it.password = newPassword
         }
         userPasswordRepo.save(userPassword)
         return true
