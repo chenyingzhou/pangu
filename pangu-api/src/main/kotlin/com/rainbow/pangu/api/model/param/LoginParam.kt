@@ -12,4 +12,7 @@ class LoginParam {
 
     @Schema(description = "验证码")
     var code: String = ""
+
+    @Schema(description = "是否重置密码")
+    var resetPassword: Boolean = false
 }

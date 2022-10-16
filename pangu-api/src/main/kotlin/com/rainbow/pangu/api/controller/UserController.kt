@@ -36,7 +36,8 @@ class UserController {
     @PostMapping("/user/login")
     @Operation(summary = "登录(密码和验证码二选一)")
     fun login(@RequestBody loginParam: LoginParam): ResultBody<LoginVO> {
-        return ResultBody.ok(userService.login(loginParam.phoneNo, loginParam.password, loginParam.code))
+        val vo = userService.login(loginParam.phoneNo, loginParam.password, loginParam.code, loginParam.resetPassword)
+        return ResultBody.ok(vo)
     }
 
     @GetMapping("/user/info")

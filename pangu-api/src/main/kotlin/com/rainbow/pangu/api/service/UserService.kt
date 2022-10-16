@@ -37,6 +37,9 @@ class UserService {
         if (userId > 0) {
             realPhoneNo = userRepo.findById(userId).orElseThrow().phoneNo
         }
+        if (!realPhoneNo.matches("^1\\d{10}$".toRegex())) {
+            throw BizException("请输入正确的手机号")
+        }
         val ip = ClientInfoHolder.ip
         val hour = System.currentTimeMillis() / 1000 / 3600
         val limitKey = KeyTemplate.SMS_IP_LIMIT.fill(hour, ip)
@@ -59,7 +62,7 @@ class UserService {
     /**
      * 用户登录，可以选择密码或短信验证码
      */
-    fun login(phoneNo: String, password: String, code: String): LoginVO {
+    fun login(phoneNo: String, password: String, code: String, resetPassword: Boolean): LoginVO {
         var user: User? = null
         // 验证码/密码任选其一
         if (code.isBlank() && password.isBlank()) {
@@ -99,6 +102,15 @@ class UserService {
             }
             userRepo.save(user)
         }
+        // 若选择重置密码，则清除密码
+        if (resetPassword) {
+            val userPassword = userPasswordRepo.findByTypeAndUserId(UserPassword.Type.LOGIN, user.id).orElse(null)
+            if (userPassword != null) {
+                userPassword.password = ""
+                userPasswordRepo.save(userPassword)
+            }
+        }
+        // 生成TOKEN
         val token = DigestUtils.md5DigestAsHex((user.id.toString() + System.currentTimeMillis()).toByteArray())
         RedisUtil.store(KeyTemplate.USER_TOKEN.fill(token) to user.id, 86400 * 7)
         return LoginVO().apply {
@@ -136,7 +148,7 @@ class UserService {
      */
     fun hasPassword(userId: Int, type: UserPassword.Type): Boolean {
         val userPasswordOpt = userPasswordRepo.findByTypeAndUserId(type, userId)
-        return userPasswordOpt.isPresent
+        return userPasswordOpt.isPresent && userPasswordOpt.get().password.isNotBlank()
     }
 
     /**
