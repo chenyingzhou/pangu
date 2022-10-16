@@ -12,6 +12,7 @@ object UserVOConv : Converter<User, UserVO> {
         vo.description = s.description
         vo.creator = s.creator
         vo.signature = s.signature
+        vo.hasRealName = s.realName.isNotBlank()
         return vo
     }
 }

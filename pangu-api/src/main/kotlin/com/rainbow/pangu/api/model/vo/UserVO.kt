@@ -21,4 +21,7 @@ class UserVO {
 
     @Schema(description = "是否为创造者")
     var creator = false
+
+    @Schema(description = "是否实名认证")
+    var hasRealName = false
 }

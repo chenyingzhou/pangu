@@ -29,6 +29,9 @@ class User : BaseEntity() {
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '头像'")
     var avatar = ""
 
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '个性签名'")
+    var signature = ""
+
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '个人描述'")
     var description = ""
 
@@ -41,8 +44,8 @@ class User : BaseEntity() {
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '真实姓名'")
     var realName = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '个性签名'")
-    var signature = ""
+    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0' COMMENT '实名认证是否验证'")
+    var realNameChecked = false
 
     override fun toString(): String {
         return "User(id=$id, phoneNo='$phoneNo', nickName='$nickName', avatar='$avatar', description='$description', creator=$creator, idCardNo='$idCardNo', realName='$realName', signature='$signature')"

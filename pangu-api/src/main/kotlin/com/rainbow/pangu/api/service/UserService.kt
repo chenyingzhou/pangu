@@ -189,4 +189,40 @@ class UserService {
         return true
     }
 
+    /**
+     * 实名认证，仅校验身份证的校验码
+     */
+    fun realName(userId: Int, realName: String, idCardNo: String): Boolean {
+        val user = userRepo.findById(userId).orElseThrow()
+        if (user.realNameChecked) {
+            throw BizException("不需要重复认证")
+        }
+        if (realName.length < 2 || realName.length > 10) {
+            throw BizException("认证失败")
+        }
+        if (!checkIdCardNo(idCardNo)) {
+            throw BizException("认证失败")
+        }
+        user.let {
+            it.realName = realName
+            it.idCardNo = idCardNo
+        }
+        userRepo.save(user)
+        return true
+    }
+
+    fun checkIdCardNo(idCardNo: String): Boolean {
+        if (idCardNo.length != 18) {
+            return false
+        }
+        val chars = idCardNo.toCharArray()
+        chars[17] = if (chars[17] == 'X') '9' + 1 else chars[17]
+        val wights = arrayOf(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2, 1)
+        var sum = 0
+        for (i in 0..17) {
+            sum += (chars[i] - '0') * wights[i]
+        }
+        return sum % 11 == 1
+    }
+
 }

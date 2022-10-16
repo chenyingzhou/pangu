@@ -1,10 +1,7 @@
 package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
-import com.rainbow.pangu.api.model.param.ChangePasswordParam
-import com.rainbow.pangu.api.model.param.EditUserParam
-import com.rainbow.pangu.api.model.param.LoginParam
-import com.rainbow.pangu.api.model.param.SendSmsParam
+import com.rainbow.pangu.api.model.param.*
 import com.rainbow.pangu.api.model.vo.LoginVO
 import com.rainbow.pangu.api.model.vo.UserVO
 import com.rainbow.pangu.api.service.UserService
@@ -68,6 +65,14 @@ class UserController {
     fun changePassword(@RequestBody changePasswordParam: ChangePasswordParam): ResultBody<Boolean> {
         changePasswordParam.userId = ClientInfoHolder.userId
         return ResultBody.ok(userService.changePassword(changePasswordParam))
+    }
+
+    @PostMapping("/user/realName")
+    @Operation(summary = "实名认证")
+    @LoginCheck(lock = true)
+    fun realName(@RequestBody realNameParam: RealNameParam): ResultBody<Boolean> {
+        val userId = ClientInfoHolder.userId
+        return ResultBody.ok(userService.realName(userId, realNameParam.realName, realNameParam.idCardNo.uppercase()))
     }
 
 }
