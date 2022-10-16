@@ -3,6 +3,7 @@ package com.rainbow.pangu.api.controller
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.*
 import com.rainbow.pangu.api.model.vo.LoginVO
+import com.rainbow.pangu.api.model.vo.UserAddressVO
 import com.rainbow.pangu.api.model.vo.UserVO
 import com.rainbow.pangu.api.service.UserService
 import com.rainbow.pangu.base.ResultBody
@@ -73,6 +74,22 @@ class UserController {
     fun realName(@RequestBody realNameParam: RealNameParam): ResultBody<Boolean> {
         val userId = ClientInfoHolder.userId
         return ResultBody.ok(userService.realName(userId, realNameParam.realName, realNameParam.idCardNo.uppercase()))
+    }
+
+    @GetMapping("/user/address")
+    @Operation(summary = "获取地址")
+    @LoginCheck
+    fun getAddress(): ResultBody<UserAddressVO> {
+        val userId = ClientInfoHolder.userId
+        return ResultBody.ok(userService.getAddress(userId))
+    }
+
+    @PostMapping("/user/address")
+    @Operation(summary = "修改地址")
+    @LoginCheck(lock = true)
+    fun setAddress(@RequestBody userAddressParam: UserAddressParam): ResultBody<Boolean> {
+        userAddressParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(userService.setAddress(userAddressParam))
     }
 
 }

@@ -2,13 +2,18 @@ package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.ChangePasswordParam
 import com.rainbow.pangu.api.model.param.EditUserParam
+import com.rainbow.pangu.api.model.param.UserAddressParam
 import com.rainbow.pangu.api.model.vo.LoginVO
+import com.rainbow.pangu.api.model.vo.UserAddressVO
 import com.rainbow.pangu.api.model.vo.UserVO
+import com.rainbow.pangu.api.model.vo.converter.UserAddressVOConv
 import com.rainbow.pangu.api.model.vo.converter.UserVOConv
 import com.rainbow.pangu.constant.KeyTemplate
 import com.rainbow.pangu.entity.User
+import com.rainbow.pangu.entity.UserAddress
 import com.rainbow.pangu.entity.UserPassword
 import com.rainbow.pangu.exception.BizException
+import com.rainbow.pangu.repository.UserAddressRepo
 import com.rainbow.pangu.repository.UserPasswordRepo
 import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.threadholder.ClientInfoHolder
@@ -27,6 +32,9 @@ class UserService {
 
     @Resource
     lateinit var userPasswordRepo: UserPasswordRepo
+
+    @Resource
+    lateinit var userAddressRepo: UserAddressRepo
 
     /**
      * 发送验证码，返回发送手机号(脱敏处理)
@@ -216,7 +224,7 @@ class UserService {
             return false
         }
         val chars = idCardNo.toCharArray()
-        chars[17] = if (chars[17] == 'X') '9' + 1 else chars[17]
+        if (chars[17] == 'X') chars[17] = '9' + 1
         val wights = arrayOf(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2, 1)
         var sum = 0
         for (i in 0..17) {
@@ -225,4 +233,20 @@ class UserService {
         return sum % 11 == 1
     }
 
+    fun getAddress(userId: Int): UserAddressVO {
+        val userAddress = userAddressRepo.findByUserId(userId).orElseGet { UserAddress() }
+        return UserAddressVOConv.fromEntity(userAddress)
+    }
+
+    fun setAddress(userAddressParam: UserAddressParam): Boolean {
+        val userAddress = userAddressRepo.findByUserId(userAddressParam.userId).orElseGet { UserAddress() }
+        userAddress.let {
+            it.userId = userAddressParam.userId
+            it.name = userAddressParam.name
+            it.phoneNo = userAddressParam.phoneNo
+            it.address = userAddressParam.address
+        }
+        userAddressRepo.save(userAddress)
+        return true
+    }
 }
