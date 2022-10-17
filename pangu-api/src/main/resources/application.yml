@@ -8,3 +8,8 @@ spring:
       ddl-auto: update
   config:
     import: file:/opt/conf/pangu/application.properties
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB

@@ -54,7 +54,7 @@ class UserService {
         val times = RedisUtil.increment(limitKey)
         RedisUtil.expire(limitKey, 3600)
         if (times != null && times > 10) {
-            throw BizException("获取验证码过于频繁，请在1小时重试")
+            throw BizException("获取验证码过于频繁，请在1小时后重试")
         }
         val code: String = if (EnvUtil.isTest || EnvUtil.isDev) {
             RedisUtil.del(limitKey)
