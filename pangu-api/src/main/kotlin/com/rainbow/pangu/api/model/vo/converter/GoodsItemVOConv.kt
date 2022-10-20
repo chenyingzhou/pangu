@@ -17,7 +17,7 @@ object GoodsItemVOConv : Converter<GoodsItem, GoodsItemVO> {
         vo.price = s.price
         vo.onSale = s.onSale
         vo.locked = s.locked
-        vo.owner = UserVOConv.fromEntity(userRepo.findById(s.userId).orElseGet { User() })
+        vo.owner = UserShortVOConv.fromEntity(userRepo.findById(s.userId).orElseGet { User() })
         return vo
     }
 

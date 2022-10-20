@@ -20,5 +20,5 @@ class GoodsItemVO {
     var locked = false
 
     @Schema(description = "藏家")
-    lateinit var owner: UserVO
+    lateinit var owner: UserShortVO
 }
