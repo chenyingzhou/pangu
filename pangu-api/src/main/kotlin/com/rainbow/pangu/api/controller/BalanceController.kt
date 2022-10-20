@@ -26,7 +26,7 @@ class BalanceController {
 
     @GetMapping("/balance/bill")
     @Operation(summary = "余额明细")
-    fun bill(@RequestParam page: Int): ResultBody<List<BalanceBillVO>> {
+    fun bill(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<BalanceBillVO>> {
         val userId: Int = ClientInfoHolder.userId
         return ResultBody.ok(balanceService.bill(userId, page))
     }

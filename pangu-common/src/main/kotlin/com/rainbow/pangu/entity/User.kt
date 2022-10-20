@@ -48,6 +48,6 @@ class User : BaseEntity() {
     var realNameChecked = false
 
     override fun toString(): String {
-        return "User(id=$id, phoneNo='$phoneNo', nickName='$nickName', avatar='$avatar', description='$description', creator=$creator, idCardNo='$idCardNo', realName='$realName', signature='$signature')"
+        return "User(id=$id, phoneNo='$phoneNo', nickName='$nickName', avatar='$avatar', signature='$signature', description='$description', creator=$creator, idCardNo='$idCardNo', realName='$realName', realNameChecked=$realNameChecked)"
     }
 }

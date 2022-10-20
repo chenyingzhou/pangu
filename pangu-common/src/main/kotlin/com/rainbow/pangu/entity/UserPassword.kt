@@ -34,6 +34,4 @@ class UserPassword : BaseEntity() {
     override fun toString(): String {
         return "UserPassword(id=$id, type=$type, userId=$userId, password='$password')"
     }
-
-
 }
