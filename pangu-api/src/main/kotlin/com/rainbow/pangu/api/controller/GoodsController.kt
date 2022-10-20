@@ -1,5 +1,6 @@
 package com.rainbow.pangu.api.controller
 
+import com.rainbow.pangu.api.model.vo.GoodsItemVO
 import com.rainbow.pangu.api.model.vo.GoodsVO
 import com.rainbow.pangu.api.service.GoodsService
 import com.rainbow.pangu.base.ResultBody
@@ -18,7 +19,16 @@ class GoodsController {
 
     @PostMapping("/goods")
     @Operation(summary = "商品列表")
-    fun uploadImage(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<GoodsVO>> {
+    fun goodsList(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<GoodsVO>> {
         return ResultBody.ok(goodsService.goodsList(page))
+    }
+
+    @PostMapping("/goods/item/onSale")
+    @Operation(summary = "寄售资产列表")
+    fun onSaleItemList(
+        @RequestParam goodsId: Int,
+        @RequestParam(defaultValue = "1") page: Int,
+    ): ResultBody<List<GoodsItemVO>> {
+        return ResultBody.ok(goodsService.onSaleItemList(goodsId, page))
     }
 }

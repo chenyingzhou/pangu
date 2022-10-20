@@ -13,6 +13,7 @@ object GoodsVOConv : Converter<Goods, GoodsVO> {
 
     override fun fromEntity(s: Goods): GoodsVO {
         val vo = GoodsVO()
+        vo.id = s.id
         vo.name = s.name
         vo.initPrice = s.initPrice
         vo.initCount = s.initCount
@@ -29,7 +30,7 @@ object GoodsVOConv : Converter<Goods, GoodsVO> {
     }
 
     override fun prepare(ss: Iterable<Goods>) {
-        val userIds = ss.map { it.creatorId }
+        val userIds = ss.map { it.creatorId }.distinct()
         userRepo.findAllById(userIds)
     }
 }

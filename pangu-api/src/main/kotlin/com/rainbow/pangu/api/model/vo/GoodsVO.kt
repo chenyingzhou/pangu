@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "商品")
 class GoodsVO {
+    @Schema(description = "ID")
+    var id = 0
+
     @Schema(description = "名称")
     var name = ""
 

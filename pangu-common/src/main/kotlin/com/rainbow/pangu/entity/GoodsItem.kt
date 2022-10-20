@@ -11,14 +11,14 @@ import javax.persistence.Index
 @Entity
 @Where(clause = "deleted = false")
 @SQLDelete(sql = "update `goods_item` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
-@Table(appliesTo = "goods_item", comment = "藏品资产")
+@Table(appliesTo = "goods_item", comment = "资产")
 @javax.persistence.Table(
     name = "goods_item",
-    indexes = [Index(name = "idx_nft_id", columnList = "nftId"), Index(name = "idx_user_id", columnList = "nftId")]
+    indexes = [Index(name = "idx_goods_id", columnList = "goodsId"), Index(name = "idx_user_id", columnList = "userId")]
 )
 class GoodsItem : BaseEntity() {
     @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '藏品ID'")
-    var nftId = 0
+    var goodsId = 0
 
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT 'TOKEN'")
     var token = ""
@@ -36,6 +36,6 @@ class GoodsItem : BaseEntity() {
     var locked = false
 
     override fun toString(): String {
-        return "GoodsItem(id=$id, nftId=$nftId, token='$token', userId=$userId, price=$price, onSale=$onSale, locked=$locked)"
+        return "GoodsItem(id=$id, goodsId=$goodsId, token='$token', userId=$userId, price=$price, onSale=$onSale, locked=$locked)"
     }
 }
