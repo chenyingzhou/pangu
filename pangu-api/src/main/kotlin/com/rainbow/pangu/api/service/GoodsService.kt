@@ -58,4 +58,9 @@ class GoodsService {
         }
         return goodsOwnVOList
     }
+
+    fun goodsItemOwnList(userId: Int, goodsId: Int): List<GoodsItemVO> {
+        val goodsItems = goodsItemRepo.findAllByUserId(userId).filter { it.goodsId == goodsId }
+        return GoodsItemVOConv.fromEntity(goodsItems)
+    }
 }

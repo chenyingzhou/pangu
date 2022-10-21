@@ -36,7 +36,7 @@ class GoodsController {
     }
 
     @GetMapping("/goods/own")
-    @Operation(summary = "持有商品")
+    @Operation(summary = "持有商品列表")
     @LoginCheck
     fun goodsOwnList(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<GoodsOwnVO>> {
         var vos: List<GoodsOwnVO> = listOf()
@@ -46,4 +46,20 @@ class GoodsController {
         }
         return ResultBody.ok(vos)
     }
+
+    @GetMapping("/goods/item/own")
+    @Operation(summary = "持有资产列表")
+    @LoginCheck
+    fun goodsItemOwnList(
+        @RequestParam goodsId: Int,
+        @RequestParam(defaultValue = "1") page: Int,
+    ): ResultBody<List<GoodsItemVO>> {
+        var vos: List<GoodsItemVO> = listOf()
+        if (page == 1) {
+            val userId = ClientInfoHolder.userId
+            vos = goodsService.goodsItemOwnList(userId, goodsId)
+        }
+        return ResultBody.ok(vos)
+    }
+
 }
