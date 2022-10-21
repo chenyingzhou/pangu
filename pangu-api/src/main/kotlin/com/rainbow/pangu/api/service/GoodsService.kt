@@ -1,5 +1,6 @@
 package com.rainbow.pangu.api.service
 
+import com.rainbow.pangu.api.model.param.SaleGoodsItemParam
 import com.rainbow.pangu.api.model.vo.GoodsItemVO
 import com.rainbow.pangu.api.model.vo.GoodsOwnVO
 import com.rainbow.pangu.api.model.vo.GoodsVO
@@ -7,6 +8,7 @@ import com.rainbow.pangu.api.model.vo.converter.GoodsItemVOConv
 import com.rainbow.pangu.api.model.vo.converter.GoodsVOConv
 import com.rainbow.pangu.entity.Goods
 import com.rainbow.pangu.entity.GoodsItem
+import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.GoodsItemRepo
 import com.rainbow.pangu.repository.GoodsRepo
 import org.springframework.data.domain.PageRequest
@@ -62,5 +64,19 @@ class GoodsService {
     fun goodsItemOwnList(userId: Int, goodsId: Int): List<GoodsItemVO> {
         val goodsItems = goodsItemRepo.findAllByUserId(userId).filter { it.goodsId == goodsId }
         return GoodsItemVOConv.fromEntity(goodsItems)
+    }
+
+    fun saleGoodsItem(saleGoodsItemParam: SaleGoodsItemParam): Boolean {
+        val goodsItem = goodsItemRepo.findById(saleGoodsItemParam.goodsItemId).orElseThrow()
+        if (goodsItem.userId != saleGoodsItemParam.userId) {
+            throw BizException("不能操作他人资产")
+        }
+        if (goodsItem.locked) {
+            throw BizException("该资产正在支付中")
+        }
+        goodsItem.onSale = saleGoodsItemParam.sale
+        if (goodsItem.onSale) goodsItem.price = saleGoodsItemParam.price
+        goodsItemRepo.save(goodsItem)
+        return true
     }
 }

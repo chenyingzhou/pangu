@@ -1,6 +1,7 @@
 package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
+import com.rainbow.pangu.api.model.param.SaleGoodsItemParam
 import com.rainbow.pangu.api.model.vo.GoodsItemVO
 import com.rainbow.pangu.api.model.vo.GoodsOwnVO
 import com.rainbow.pangu.api.model.vo.GoodsVO
@@ -9,9 +10,7 @@ import com.rainbow.pangu.base.ResultBody
 import com.rainbow.pangu.threadholder.ClientInfoHolder
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
 
 @RestController
@@ -60,6 +59,14 @@ class GoodsController {
             vos = goodsService.goodsItemOwnList(userId, goodsId)
         }
         return ResultBody.ok(vos)
+    }
+
+    @PostMapping("/goods/item")
+    @Operation(summary = "上架或下架")
+    @LoginCheck(lock = true)
+    fun saleGoodsItem(@RequestBody saleGoodsItemParam: SaleGoodsItemParam): ResultBody<Boolean> {
+        saleGoodsItemParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(goodsService.saleGoodsItem(saleGoodsItemParam))
     }
 
 }
