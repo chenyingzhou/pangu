@@ -36,7 +36,26 @@ class GoodsService {
         return GoodsItemVOConv.fromEntity(goodsItemPage)
     }
 
-    fun goodsOwnList(userId: Int, page: Int): List<GoodsOwnVO> {
-        TODO("Not yet implemented")
+    fun goodsOwnList(userId: Int): List<GoodsOwnVO> {
+        var goodsItems = goodsItemRepo.findAllByUserId(userId)
+        goodsItems = goodsItems.sortedByDescending { it.updatedTime }
+        val goodsIds: MutableList<Int> = ArrayList()
+        val goodsIdCountMap: MutableMap<Int, Int> = HashMap()
+        for (goodsItem in goodsItems) {
+            val goodsId = goodsItem.goodsId
+            goodsIdCountMap[goodsId] = 1 + (goodsIdCountMap[goodsId] ?: 0)
+            if (!goodsIds.contains(goodsId)) {
+                goodsIds.add(goodsId)
+            }
+        }
+        val goodsList = goodsRepo.findAllById(goodsIds)
+        val goodsVOList = GoodsVOConv.fromEntity(goodsList)
+        val goodsOwnVOList = goodsVOList.map {
+            GoodsOwnVO().apply {
+                this.count = goodsIdCountMap[it.id]!!
+                this.goods = it
+            }
+        }
+        return goodsOwnVOList
     }
 }

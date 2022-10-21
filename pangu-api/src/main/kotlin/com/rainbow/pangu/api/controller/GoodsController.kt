@@ -42,9 +42,8 @@ class GoodsController {
         var vos: List<GoodsOwnVO> = listOf()
         if (page == 1) {
             val userId = ClientInfoHolder.userId
-            vos = goodsService.goodsOwnList(userId, page)
+            vos = goodsService.goodsOwnList(userId)
         }
         return ResultBody.ok(vos)
     }
-
 }

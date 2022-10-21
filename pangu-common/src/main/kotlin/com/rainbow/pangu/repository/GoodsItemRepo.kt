@@ -7,4 +7,6 @@ import org.springframework.data.domain.Pageable
 
 interface GoodsItemRepo : BaseRepo<GoodsItem> {
     fun findAllByGoodsId(goodsId: Int, pageable: Pageable): Page<GoodsItem>
+
+    fun findAllByUserId(goodsId: Int): List<GoodsItem>
 }
