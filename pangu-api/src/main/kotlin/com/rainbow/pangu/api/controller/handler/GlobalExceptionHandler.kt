@@ -3,6 +3,7 @@ package com.rainbow.pangu.api.controller.handler
 import com.rainbow.pangu.base.ResultBody
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.exception.BizExceptionEnum
+import com.rainbow.pangu.util.EnvUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -34,6 +35,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(value = [Throwable::class])
     fun exceptionHandler(e: Throwable): ResultBody<*> {
         log.error(e.message, e)
-        return ResultBody.fail(e.message ?: "", BizExceptionEnum.SERVER_ERROR.code)
+        val message = if (EnvUtil.isProd) "服务器走神了" else e.stackTraceToString()
+        return ResultBody.fail(message, BizExceptionEnum.SERVER_ERROR.code)
     }
 }
