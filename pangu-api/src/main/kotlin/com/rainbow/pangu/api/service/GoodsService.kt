@@ -1,6 +1,7 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.vo.GoodsItemVO
+import com.rainbow.pangu.api.model.vo.GoodsOwnVO
 import com.rainbow.pangu.api.model.vo.GoodsVO
 import com.rainbow.pangu.api.model.vo.converter.GoodsItemVOConv
 import com.rainbow.pangu.api.model.vo.converter.GoodsVOConv
@@ -33,5 +34,9 @@ class GoodsService {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(GoodsItem::price.name).ascending())
         val goodsItemPage = goodsItemRepo.findAllByGoodsId(goodsId, pageable)
         return GoodsItemVOConv.fromEntity(goodsItemPage)
+    }
+
+    fun goodsOwnList(userId: Int, page: Int): List<GoodsOwnVO> {
+        TODO("Not yet implemented")
     }
 }
