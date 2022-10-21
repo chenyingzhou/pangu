@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "持有商品")
 class GoodsOwnVO {
-    @Schema(description = "ID")
+    @Schema(description = "数量")
     var count = 0
 
     @Schema(description = "商品")
