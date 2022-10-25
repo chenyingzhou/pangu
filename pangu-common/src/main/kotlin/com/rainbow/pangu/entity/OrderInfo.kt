@@ -46,6 +46,10 @@ class OrderInfo : BaseEntity() {
     @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0' COMMENT '是否退款'")
     var refunded = false
 
+    override fun toString(): String {
+        return "OrderInfo(id=$id, orderNo='$orderNo', userId=$userId, goodsId=$goodsId, goodsCount=$goodsCount, amount=$amount, sellerFee=$sellerFee, buyerFee=$buyerFee, status=$status, paid=$paid, refunded=$refunded)"
+    }
+
     enum class Status {
         INIT, SUCCESS, FAIL
     }

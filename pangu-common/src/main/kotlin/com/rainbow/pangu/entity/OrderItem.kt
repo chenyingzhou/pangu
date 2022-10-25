@@ -47,4 +47,8 @@ class OrderItem : BaseEntity() {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '状态(INIT/SUCCESS/FAIL)'")
     var status = OrderInfo.Status.INIT
+
+    override fun toString(): String {
+        return "OrderItem(id=$id, orderId=$orderId, userId=$userId, sellerId=$sellerId, goodsId=$goodsId, goodsItemId=$goodsItemId, amount=$amount, sellerFee=$sellerFee, buyerFee=$buyerFee, status=$status)"
+    }
 }
