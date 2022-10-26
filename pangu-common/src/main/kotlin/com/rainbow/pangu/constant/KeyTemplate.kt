@@ -6,6 +6,7 @@ enum class KeyTemplate(private val key: String) {
     SMS_IP_LIMIT("sms:ip:limit:{hour}:{ip}"),
     SMS_CODE("sms:code:{phoneNo}"),
     USER_TOKEN("user:token:{token}"),
+    UNSOLD_GOODS_ITEM_IDS("unsold:{goodsId}:goods_item_ids"),
 
     // 分布式锁
     LOCK_BALANCE("balance:userId:{userId}"),

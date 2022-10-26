@@ -24,6 +24,7 @@ object GoodsVOConv : Converter<Goods, GoodsVO> {
         vo.mediaType = s.mediaType
         vo.mediaUrl = s.mediaUrl
         vo.description = s.description
+        vo.primaryTime = DateTimeUtil.toTimestamp(s.primaryTime)
         vo.secondaryTime = DateTimeUtil.toTimestamp(s.secondaryTime)
         vo.creator = UserVOConv.fromEntity(userRepo.findById(s.creatorId).orElseGet { User() })
         return vo

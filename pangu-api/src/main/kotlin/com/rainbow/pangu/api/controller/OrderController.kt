@@ -20,12 +20,25 @@ class OrderController {
     @Resource
     lateinit var orderService: OrderService
 
+    @PostMapping("/order/goods/{goodsId}/count/{count}")
+    @Operation(summary = "创建一级订单")
+    @LoginCheck(lock = true, checkSign = true)
+    fun createByGoodsId(
+        @PathVariable goodsId: Int,
+        @PathVariable count: Int,
+        @RequestBody payParam: PayParam,
+    ): ResultBody<PaymentOrderUnverifiedVO> {
+        payParam.ip = ClientInfoHolder.ip
+        payParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(orderService.createByGoodsId(goodsId, count, payParam))
+    }
+
     @PostMapping("/order/goodsItem/{goodsItemId}")
-    @Operation(summary = "创建普通订单")
+    @Operation(summary = "创建二级订单")
     @LoginCheck(lock = true, checkSign = true)
     fun create(@PathVariable goodsItemId: Int, @RequestBody payParam: PayParam): ResultBody<PaymentOrderUnverifiedVO> {
         payParam.ip = ClientInfoHolder.ip
         payParam.userId = ClientInfoHolder.userId
-        return ResultBody.ok(orderService.create(listOf(goodsItemId), payParam))
+        return ResultBody.ok(orderService.createByGoodsItemId(goodsItemId, payParam))
     }
 }

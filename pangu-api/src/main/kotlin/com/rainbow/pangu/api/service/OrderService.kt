@@ -13,9 +13,12 @@ import com.rainbow.pangu.repository.OrderInfoRepo
 import com.rainbow.pangu.repository.OrderItemRepo
 import com.rainbow.pangu.util.KeyUtil
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import javax.annotation.Resource
+import javax.transaction.Transactional
 
 @Service
+@Transactional(rollbackOn = [Exception::class])
 class OrderService {
     @Resource
     lateinit var orderInfoRepo: OrderInfoRepo
@@ -32,10 +35,44 @@ class OrderService {
     @Resource
     lateinit var balanceService: BalanceService
 
+    @Resource
+    lateinit var unsoldService: UnsoldService
+
+    /**
+     * 根据商品创建订单(一级市场)
+     */
+    fun createByGoodsId(goodsId: Int, count: Int, payParam: PayParam): PaymentOrderUnverifiedVO {
+        if (count < 0 || count > 10) {
+            throw BizException("一次最多购买10份")
+        }
+        val now = LocalDateTime.now()
+        val goods = goodsRepo.findById(goodsId).orElseThrow()
+        if (now < goods.primaryTime || now >= goods.secondaryTime) {
+            throw BizException("不在购买时间内")
+        }
+        val goodsItemIds = unsoldService.pop(goodsId, count)
+        if (goodsItemIds.size < count) {
+            throw BizException("库存不足，当前库存为${unsoldService.stockNum(goodsId)}")
+        }
+        return create(goodsItemIds, payParam)
+    }
+
+    /**
+     * 根据资产创建订单(二级市场)
+     */
+    fun createByGoodsItemId(goodsItemId: Int, payParam: PayParam): PaymentOrderUnverifiedVO {
+        val goodsItem = goodsItemRepo.findById(goodsItemId).orElseThrow()
+        val goods = goodsRepo.findById(goodsItem.goodsId).orElseThrow()
+        if (LocalDateTime.now() < goods.secondaryTime) {
+            throw BizException("该商品尚未开启二级市场")
+        }
+        return create(listOf(goodsItemId), payParam)
+    }
+
     /**
      * 生成订单
      */
-    fun create(goodsItemIds: List<Int>, payParam: PayParam): PaymentOrderUnverifiedVO {
+    private fun create(goodsItemIds: List<Int>, payParam: PayParam): PaymentOrderUnverifiedVO {
         val userId = payParam.userId
         val goodsItems = goodsItemRepo.findAllById(goodsItemIds)
         if (goodsItems.isEmpty()) {

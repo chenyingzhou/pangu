@@ -75,6 +75,9 @@ class Goods : BaseEntity() {
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT 'IPFS'")
     var ipfs = ""
 
+    @Column(columnDefinition = "timestamp COMMENT '一级市场开放时间'")
+    var primaryTime = END_TIME
+
     @Column(columnDefinition = "timestamp COMMENT '二级市场开放时间'")
     var secondaryTime = END_TIME
 
@@ -85,7 +88,7 @@ class Goods : BaseEntity() {
     var endTime: LocalDateTime = END_TIME
 
     override fun toString(): String {
-        return "Goods(id=$id, creatorId=$creatorId, categoryId=$categoryId, name='$name', initPrice=$initPrice, initCount=$initCount, realCount=$realCount, nftCount=$nftCount, sellerFeeRate=$sellerFeeRate, buyerFeeRate=$buyerFeeRate, imageUrl='$imageUrl', mediaType=$mediaType, mediaUrl='$mediaUrl', description='$description', information='$information', blockchainNet='$blockchainNet', blockchainContract='$blockchainContract', blockchainAddress='$blockchainAddress', ipfs='$ipfs', secondaryTime=$secondaryTime, startTime=$startTime, endTime=$endTime)"
+        return "Goods(id=$id, creatorId=$creatorId, categoryId=$categoryId, name='$name', initPrice=$initPrice, initCount=$initCount, realCount=$realCount, nftCount=$nftCount, sellerFeeRate=$sellerFeeRate, buyerFeeRate=$buyerFeeRate, imageUrl='$imageUrl', mediaType=$mediaType, mediaUrl='$mediaUrl', description='$description', information='$information', blockchainNet='$blockchainNet', blockchainContract='$blockchainContract', blockchainAddress='$blockchainAddress', ipfs='$ipfs', primaryTime=$primaryTime, secondaryTime=$secondaryTime, startTime=$startTime, endTime=$endTime)"
     }
 
     enum class Type {

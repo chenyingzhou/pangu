@@ -38,6 +38,9 @@ class GoodsVO {
     @Schema(description = "描述")
     var description = ""
 
+    @Schema(description = "一级市场开放时间")
+    var primaryTime: Long = 0
+
     @Schema(description = "二级市场开放时间")
     var secondaryTime: Long = 0
 

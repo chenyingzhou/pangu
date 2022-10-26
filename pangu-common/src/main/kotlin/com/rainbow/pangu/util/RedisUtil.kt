@@ -184,9 +184,9 @@ object RedisUtil : BeanFactoryAware {
     /**
      * 获取集合元素
      */
-    fun <E : Any> sPop(key: String, count: Int, cls: KClass<E>): List<E?> {
+    fun <E : Any> sPop(key: String, count: Int, cls: KClass<E>): List<E> {
         val members = redisTemplate.opsForSet().pop(key, count.toLong())!!
-        return members.asSequence().map { toObject(it, cls) }.filter { it != null }.toList()
+        return members.asSequence().map { toObject(it, cls) }.filter { it != null }.map { it!! }.toList()
     }
 
     /**
