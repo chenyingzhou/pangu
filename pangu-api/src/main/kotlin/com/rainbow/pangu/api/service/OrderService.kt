@@ -1,6 +1,7 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.OrderInfo
 import com.rainbow.pangu.entity.OrderItem
@@ -34,17 +35,20 @@ class OrderService {
     /**
      * 生成订单
      */
-    fun create(goodsItemIds: List<Int>, payParam: PayParam): Boolean {
+    fun create(goodsItemIds: List<Int>, payParam: PayParam): PaymentOrderUnverifiedVO {
         val userId = payParam.userId
         val goodsItems = goodsItemRepo.findAllById(goodsItemIds)
         if (goodsItems.isEmpty()) {
-            throw BizException("藏品不存在")
+            throw BizException("该资产不存在")
         }
-        val goods = goodsRepo.findById(goodsItems[0].goodsId).orElseThrow { BizException("该藏品不可售") }
+        val goods = goodsRepo.findById(goodsItems[0].goodsId).orElseThrow { BizException("该资产不可售") }
         // 锁定资产
         goodsItems.forEach {
+            if (it.userId == userId) {
+                throw BizException("不能购买自己的资产")
+            }
             if (it.locked || !it.onSale) {
-                throw BizException("该藏品已被其他人买走")
+                throw BizException("该资产已被其他人买走")
             }
             it.locked = true
             goodsItemRepo.save(it)
@@ -88,10 +92,16 @@ class OrderService {
         if (payParam.paymentMethodType == PaymentMethod.Type.BALANCE) {
             balanceService.add(BalanceBill.Type.PAY, userId, -(orderInfo.amount + orderInfo.buyerFee))
             paid(orderInfo)
-            return true
+            return PaymentOrderUnverifiedVO().apply {
+                orderNo = orderInfo.orderNo
+            }
         }
         // TODO 使用KFT
-        return true
+        return PaymentOrderUnverifiedVO().apply {
+            orderNo = orderInfo.orderNo
+            paymentOrderNo = ""
+            needSmsValidate = true
+        }
     }
 
     /**

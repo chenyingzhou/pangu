@@ -28,4 +28,9 @@ class PayService {
         val accountList = paymentAccountRepo.findAllByUserId(userId)
         return PaymentAccountVOConv.fromEntity(accountList)
     }
+
+    fun smsValidate(paymentOrderNo: String, smsCode: String): Boolean {
+        // TODO
+        return true
+    }
 }

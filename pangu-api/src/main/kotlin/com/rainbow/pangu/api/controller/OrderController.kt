@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.service.OrderService
 import com.rainbow.pangu.base.ResultBody
 import com.rainbow.pangu.threadholder.ClientInfoHolder
@@ -22,7 +23,7 @@ class OrderController {
     @PostMapping("/order/goodsItem/{goodsItemId}")
     @Operation(summary = "创建普通订单")
     @LoginCheck(lock = true, checkSign = true)
-    fun create(@PathVariable goodsItemId: Int, @RequestBody payParam: PayParam): ResultBody<Boolean> {
+    fun create(@PathVariable goodsItemId: Int, @RequestBody payParam: PayParam): ResultBody<PaymentOrderUnverifiedVO> {
         payParam.ip = ClientInfoHolder.ip
         payParam.userId = ClientInfoHolder.userId
         return ResultBody.ok(orderService.create(listOf(goodsItemId), payParam))
