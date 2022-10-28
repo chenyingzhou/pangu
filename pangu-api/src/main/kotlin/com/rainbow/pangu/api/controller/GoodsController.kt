@@ -25,6 +25,12 @@ class GoodsController {
         return ResultBody.ok(goodsService.goodsList(page))
     }
 
+    @GetMapping("/goods/{goodsId}")
+    @Operation(summary = "商品详情")
+    fun goodsDetail(@PathVariable goodsId: Int): ResultBody<GoodsVO> {
+        return ResultBody.ok(goodsService.goodsDetail(goodsId))
+    }
+
     @GetMapping("/goods/item/onSale")
     @Operation(summary = "寄售资产列表")
     fun onSaleItemList(

@@ -32,6 +32,11 @@ class GoodsService {
         return GoodsVOConv.fromEntity(goodsPage)
     }
 
+    fun goodsDetail(goodsId: Int): GoodsVO {
+        val goods = goodsRepo.findById(goodsId).orElseThrow()
+        return GoodsVOConv.fromEntity(goods)
+    }
+
     fun onSaleItemList(goodsId: Int, page: Int): List<GoodsItemVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(GoodsItem::price.name).ascending())
         val goodsItemPage = goodsItemRepo.findAllByGoodsId(goodsId, pageable)
