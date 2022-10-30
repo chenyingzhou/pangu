@@ -6,26 +6,21 @@ import com.aliyun.oss.model.PutObjectRequest
 import com.rainbow.pangu.api.config.OssConfig
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.util.HexUtil
+import com.rainbow.pangu.util.SpringContextUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.BeanFactory
-import org.springframework.beans.factory.BeanFactoryAware
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Service
-class FileService : BeanFactoryAware {
+class FileService {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
-    private lateinit var ossClient: OSS
-    private var bucketName = ""
     private val timePathFormatter = DateTimeFormatter.ofPattern("yyyyMMdd/HHmmss-")
-
-    override fun setBeanFactory(beanFactory: BeanFactory) {
-        val ossConfig = beanFactory.getBean(OssConfig::class.java)
-        bucketName = ossConfig.bucketName
-        ossClient = OSSClientBuilder().build(ossConfig.endpoint, ossConfig.accessKeyId, ossConfig.accessKeySecret)
+    private val ossConfig: OssConfig by lazy { SpringContextUtil.getBean(OssConfig::class) }
+    private val ossClient: OSS by lazy {
+        OSSClientBuilder().build(ossConfig.endpoint, ossConfig.accessKeyId, ossConfig.accessKeySecret)
     }
 
     private fun handleFileName(originFileName: String): String {
@@ -45,13 +40,13 @@ class FileService : BeanFactoryAware {
 
     fun upload(file: MultipartFile): String {
         val objectName = handleFileName(file.originalFilename!!)
-        val request = PutObjectRequest(bucketName, objectName, file.inputStream)
+        val request = PutObjectRequest(ossConfig.bucketName, objectName, file.inputStream)
         try {
             ossClient.putObject(request)
         } catch (e: Exception) {
             log.error("上传文件出现异常{}", e.message)
             throw BizException("上传失败")
         }
-        return objectName
+        return "/$objectName"
     }
 }
