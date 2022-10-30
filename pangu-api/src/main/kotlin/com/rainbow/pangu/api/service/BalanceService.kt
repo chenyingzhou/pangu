@@ -1,10 +1,13 @@
 package com.rainbow.pangu.api.service
 
+import com.rainbow.pangu.api.model.param.PayParam
 import com.rainbow.pangu.api.model.vo.BalanceBillVO
+import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.model.vo.converter.BalanceBillVOConv
 import com.rainbow.pangu.constant.KeyTemplate
 import com.rainbow.pangu.entity.Balance
 import com.rainbow.pangu.entity.BalanceBill
+import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.BalanceBillRepo
 import com.rainbow.pangu.repository.BalanceRepo
@@ -112,5 +115,31 @@ class BalanceService {
             balanceRepo.save(balance)
         }
         return balanceBill
+    }
+
+    fun recharge(amount: Long, payParam: PayParam): PaymentOrderUnverifiedVO {
+        if (payParam.paymentMethodType == PaymentMethod.Type.BALANCE) {
+            throw BizException("不支持该支付方式")
+        }
+        val balanceBill = add(BalanceBill.Type.RECHARGE, payParam.userId, amount)
+        // TODO 使用KFT
+        return PaymentOrderUnverifiedVO().apply {
+            orderNo = balanceBill.billNo
+            paymentOrderNo = ""
+            needSmsValidate = true
+        }
+    }
+
+    fun withdraw(amount: Long, payParam: PayParam): PaymentOrderUnverifiedVO {
+        if (payParam.paymentAccountId == 0) {
+            throw BizException("请使用支付成功的银行卡提现")
+        }
+        val balanceBill = add(BalanceBill.Type.WITHDRAW, payParam.userId, -amount)
+        // TODO 使用KFT
+        return PaymentOrderUnverifiedVO().apply {
+            orderNo = balanceBill.billNo
+            paymentOrderNo = ""
+            needSmsValidate = false
+        }
     }
 }

@@ -1,14 +1,15 @@
 package com.rainbow.pangu.api.controller
 
+import com.rainbow.pangu.annotation.LoginCheck
+import com.rainbow.pangu.api.model.param.PayParam
 import com.rainbow.pangu.api.model.vo.BalanceBillVO
+import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.service.BalanceService
 import com.rainbow.pangu.base.ResultBody
 import com.rainbow.pangu.threadholder.ClientInfoHolder
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
 
 @RestController
@@ -29,5 +30,23 @@ class BalanceController {
     fun bill(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<BalanceBillVO>> {
         val userId: Int = ClientInfoHolder.userId
         return ResultBody.ok(balanceService.bill(userId, page))
+    }
+
+    @PostMapping("/balance/recharge/{amount}")
+    @Operation(summary = "充值")
+    @LoginCheck(lock = true, checkSign = true)
+    fun recharge(@PathVariable amount: Long, @RequestBody payParam: PayParam): ResultBody<PaymentOrderUnverifiedVO> {
+        payParam.ip = ClientInfoHolder.ip
+        payParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(balanceService.recharge(amount, payParam))
+    }
+
+    @PostMapping("/balance/withdraw/{amount}")
+    @Operation(summary = "提现")
+    @LoginCheck(lock = true, checkSign = true)
+    fun withdraw(@PathVariable amount: Long, @RequestBody payParam: PayParam): ResultBody<PaymentOrderUnverifiedVO> {
+        payParam.ip = ClientInfoHolder.ip
+        payParam.userId = ClientInfoHolder.userId
+        return ResultBody.ok(balanceService.withdraw(amount, payParam))
     }
 }
