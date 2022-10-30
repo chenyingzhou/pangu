@@ -1,7 +1,9 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.OrderItemVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
+import com.rainbow.pangu.api.model.vo.converter.OrderItemVOConv
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.OrderInfo
 import com.rainbow.pangu.entity.OrderItem
@@ -12,6 +14,8 @@ import com.rainbow.pangu.repository.GoodsRepo
 import com.rainbow.pangu.repository.OrderInfoRepo
 import com.rainbow.pangu.repository.OrderItemRepo
 import com.rainbow.pangu.util.KeyUtil
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import javax.annotation.Resource
@@ -177,5 +181,11 @@ class OrderService {
         if (valid && sellerId > 0) {
             balanceService.add(BalanceBill.Type.SALE, sellerId, orderInfo.amount - orderInfo.sellerFee)
         }
+    }
+
+    fun itemList(goodsId: Int, page: Int): List<OrderItemVO> {
+        val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
+        val items = orderItemRepo.findAllByGoodsIdAndStatusIn(goodsId, listOf(OrderInfo.Status.SUCCESS), pageable)
+        return OrderItemVOConv.fromEntity(items)
     }
 }

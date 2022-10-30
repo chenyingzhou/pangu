@@ -2,16 +2,14 @@ package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.OrderItemVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.service.OrderService
 import com.rainbow.pangu.base.ResultBody
 import com.rainbow.pangu.threadholder.ClientInfoHolder
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
 
 @RestController
@@ -40,5 +38,14 @@ class OrderController {
         payParam.ip = ClientInfoHolder.ip
         payParam.userId = ClientInfoHolder.userId
         return ResultBody.ok(orderService.createByGoodsItemId(goodsItemId, payParam))
+    }
+
+    @GetMapping("/order/item/goods/{goodsId}")
+    @Operation(summary = "交易记录")
+    fun itemList(
+        @PathVariable goodsId: Int,
+        @RequestParam(defaultValue = "1") page: Int
+    ): ResultBody<List<OrderItemVO>> {
+        return ResultBody.ok(orderService.itemList(goodsId, page))
     }
 }
