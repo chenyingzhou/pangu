@@ -2,7 +2,7 @@ package com.rainbow.pangu.api.model.vo
 
 import io.swagger.v3.oas.annotations.media.Schema
 
-@Schema(description = "资产")
+@Schema(description = "商品交易记录")
 class OrderItemVO {
     @Schema(description = "金额'")
     var amount = 0L

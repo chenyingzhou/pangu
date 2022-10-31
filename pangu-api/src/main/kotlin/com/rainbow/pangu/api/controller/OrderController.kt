@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.controller
 
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.OrderItemForMeVO
 import com.rainbow.pangu.api.model.vo.OrderItemVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.service.OrderService
@@ -41,11 +42,19 @@ class OrderController {
     }
 
     @GetMapping("/order/item/goods/{goodsId}")
-    @Operation(summary = "交易记录")
+    @Operation(summary = "交易(买入)记录")
     fun itemList(
         @PathVariable goodsId: Int,
         @RequestParam(defaultValue = "1") page: Int
     ): ResultBody<List<OrderItemVO>> {
         return ResultBody.ok(orderService.itemList(goodsId, page))
+    }
+
+    @GetMapping("/order/item/forMe")
+    @Operation(summary = "我的交易(买入/卖出)记录")
+    @LoginCheck
+    fun itemListForMe(@RequestParam(defaultValue = "1") page: Int): ResultBody<List<OrderItemForMeVO>> {
+        val userId = ClientInfoHolder.userId
+        return ResultBody.ok(orderService.itemListForMe(userId, page))
     }
 }

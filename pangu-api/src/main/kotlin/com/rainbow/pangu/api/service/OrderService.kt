@@ -1,8 +1,10 @@
 package com.rainbow.pangu.api.service
 
 import com.rainbow.pangu.api.model.param.PayParam
+import com.rainbow.pangu.api.model.vo.OrderItemForMeVO
 import com.rainbow.pangu.api.model.vo.OrderItemVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
+import com.rainbow.pangu.api.model.vo.converter.OrderItemForMeVOConv
 import com.rainbow.pangu.api.model.vo.converter.OrderItemVOConv
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.OrderInfo
@@ -187,5 +189,11 @@ class OrderService {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
         val items = orderItemRepo.findAllByGoodsIdAndStatusIn(goodsId, listOf(OrderInfo.Status.SUCCESS), pageable)
         return OrderItemVOConv.fromEntity(items)
+    }
+
+    fun itemListForMe(userId: Int, page: Int): List<OrderItemForMeVO> {
+        val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
+        val items = orderItemRepo.findAllByUserAndStatusIn(userId, listOf(OrderInfo.Status.SUCCESS), pageable)
+        return OrderItemForMeVOConv.fromEntity(items)
     }
 }
