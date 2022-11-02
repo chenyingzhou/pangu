@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.filter
 
 import com.rainbow.pangu.constant.Platform
 import com.rainbow.pangu.threadholder.ClientInfoHolder
+import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.IpUtil
 import org.springframework.stereotype.Component
 import java.io.IOException
@@ -20,9 +21,14 @@ class LocalClientHolderFilter : Filter {
             val timestampStr = httpRequest.getHeader("timestamp") ?: ""
             val platformStr = httpRequest.getHeader("platform") ?: ""
             val versionStr = httpRequest.getHeader("version") ?: ""
+            val userIdStr = httpRequest.getHeader("userId") ?: httpRequest.getParameter("userId") ?: "0"
             var timestamp: Long = 0
+            var userId = 0
             try {
                 timestamp = timestampStr.toLong()
+                if (!EnvUtil.isProd) {
+                    userId = userIdStr.toInt()
+                }
             } catch (ignored: Throwable) {
             }
             var version = 0
@@ -37,7 +43,7 @@ class LocalClientHolderFilter : Filter {
                 "web" -> Platform.WEB
                 else -> Platform.H5
             }
-            ClientInfoHolder.setClientInfo(token, timestamp, sign, ip, platform, version)
+            ClientInfoHolder.setClientInfo(token, timestamp, sign, ip, platform, version, userId)
             filterChain.doFilter(request, response)
         } finally {
             ClientInfoHolder.clean()

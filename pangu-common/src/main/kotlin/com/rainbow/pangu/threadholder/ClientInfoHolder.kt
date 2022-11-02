@@ -10,7 +10,15 @@ object ClientInfoHolder {
     private const val SALT = "pITfPb359onJCpuPxRwmLZ0YlzT2viSv"
     private val client = ThreadLocal.withInitial { ClientInfo() }
 
-    fun setClientInfo(token: String, timestamp: Long, sign: String, ip: String, platform: Platform, version: Int) {
+    fun setClientInfo(
+        token: String,
+        timestamp: Long,
+        sign: String,
+        ip: String,
+        platform: Platform,
+        version: Int,
+        userId: Int
+    ) {
         val clientInfo = client.get()
         clientInfo.token = token
         clientInfo.timestamp = timestamp
@@ -18,7 +26,7 @@ object ClientInfoHolder {
         clientInfo.ip = ip
         clientInfo.platform = platform
         clientInfo.version = version
-        clientInfo.userId = 0 // 用户ID在需要时才加载
+        clientInfo.userId = userId
     }
 
     fun clean() {
