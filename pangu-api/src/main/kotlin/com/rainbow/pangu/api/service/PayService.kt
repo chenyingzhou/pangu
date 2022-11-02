@@ -25,7 +25,7 @@ class PayService {
     }
 
     fun accountList(userId: Int): List<PaymentAccountVO> {
-        val accountList = paymentAccountRepo.findAllByUserId(userId)
+        val accountList = paymentAccountRepo.findAllByUserId(userId).filter { it.paid }.distinctBy { it.accountNo }
         return PaymentAccountVOConv.fromEntity(accountList)
     }
 

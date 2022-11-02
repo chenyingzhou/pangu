@@ -36,4 +36,11 @@ class PaymentAccount : BaseEntity() {
 
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '银行名称'")
     var bankName = ""
+
+    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0' COMMENT '是否支付成功'")
+    var paid = false
+
+    override fun toString(): String {
+        return "PaymentAccount(id=$id, userId=$userId, methodType=$methodType, accountName='$accountName', phoneNo='$phoneNo', idCardNo='$idCardNo', accountNo='$accountNo', bankCode='$bankCode', bankName='$bankName', paid=$paid)"
+    }
 }

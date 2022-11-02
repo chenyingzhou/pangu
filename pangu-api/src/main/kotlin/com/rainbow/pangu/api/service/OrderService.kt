@@ -6,10 +6,11 @@ import com.rainbow.pangu.api.model.vo.OrderItemVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.model.vo.converter.OrderItemForMeVOConv
 import com.rainbow.pangu.api.model.vo.converter.OrderItemVOConv
+import com.rainbow.pangu.api.service.payment.PaymentExecutor
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.OrderInfo
 import com.rainbow.pangu.entity.OrderItem
-import com.rainbow.pangu.entity.PaymentMethod
+import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.GoodsItemRepo
 import com.rainbow.pangu.repository.GoodsRepo
@@ -43,6 +44,9 @@ class OrderService {
 
     @Resource
     lateinit var unsoldService: UnsoldService
+
+    @Resource
+    lateinit var paymentExecutors: List<PaymentExecutor>
 
     /**
      * 根据商品创建订单(一级市场)
@@ -131,20 +135,16 @@ class OrderService {
         orderInfoRepo.save(orderInfo)
         orderItems.forEach { it.orderId = orderInfo.id }
         orderItemRepo.saveAll(orderItems)
-        // 使用余额支付
-        if (payParam.paymentMethodType == PaymentMethod.Type.BALANCE) {
-            balanceService.add(BalanceBill.Type.PAY, userId, -(orderInfo.amount + orderInfo.buyerFee))
+        // 申请支付
+        payParam.orderNo = orderInfo.orderNo
+        payParam.amount = orderInfo.amount + orderInfo.buyerFee
+        val paymentExecutor = paymentExecutors.find { it.type == payParam.paymentMethodType }!!
+        val paymentOrderUnverifiedVO = paymentExecutor.apply(payParam)
+        // 如果支付状态为成功(余额支付)，直接确认订单状态
+        if (paymentOrderUnverifiedVO.status == PaymentOrder.Status.SUCCESS) {
             paid(orderInfo)
-            return PaymentOrderUnverifiedVO().apply {
-                orderNo = orderInfo.orderNo
-            }
         }
-        // TODO 使用KFT
-        return PaymentOrderUnverifiedVO().apply {
-            orderNo = orderInfo.orderNo
-            paymentOrderNo = ""
-            needSmsValidate = true
-        }
+        return paymentOrderUnverifiedVO
     }
 
     /**

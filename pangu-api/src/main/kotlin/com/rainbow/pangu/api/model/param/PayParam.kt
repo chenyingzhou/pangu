@@ -20,6 +20,12 @@ class PayParam {
     @Schema(hidden = true)
     var ip = ""
 
+    @Schema(hidden = true)
+    var amount = 0L
+
+    @Schema(hidden = true)
+    var orderNo = ""
+
     @Schema(description = "银行卡参数")
     class BankParam {
         @Schema(description = "银行卡号")

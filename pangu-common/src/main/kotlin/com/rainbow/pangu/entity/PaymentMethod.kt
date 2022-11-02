@@ -28,6 +28,6 @@ class PaymentMethod : BaseEntity() {
     var platform: Platform = Platform.H5
 
     enum class Type {
-        BALANCE, KFT
+        ALIPAY, BALANCE, KFT
     }
 }
