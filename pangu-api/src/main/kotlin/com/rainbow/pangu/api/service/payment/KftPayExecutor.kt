@@ -80,7 +80,11 @@ class KftPayExecutor : PaymentExecutor {
         }
         paymentOrderRepo.save(paymentOrder)
         // 开始申请支付
-        val bankNo = cardTypeQuery(paymentAccount.accountNo, paymentOrder.paymentOrderNo)
+        val bankNo = if (paymentAccount.bankCode != "UNKNOWN" && paymentAccount.bankCode != "") {
+            paymentAccount.bankCode
+        } else {
+            cardTypeQuery(paymentAccount.accountNo, paymentOrder.paymentOrderNo)
+        }
         val dto = SmsQuickPayApplyReqDTO()
         dto.reqNo = paymentOrder.paymentOrderNo // 请求编号
         dto.service = "kpp_sms_collect" // 接口名称，固定不变
