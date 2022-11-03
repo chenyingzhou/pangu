@@ -35,7 +35,7 @@ class BalancePayExecutor : PaymentExecutor {
             status = paymentOrder.status
             needSmsValidate = false
             paymentOrderNo = paymentOrder.paymentOrderNo
-            orderNo = payParam.orderNo
+            orderNo = paymentOrder.orderNo
         }
     }
 }

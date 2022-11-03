@@ -25,6 +25,13 @@
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>3.15.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.kftpay</groupId>
+            <artifactId>sdk</artifactId>
+            <version>5.2.5.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/lib/gateway-client-5.2.5.3.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>
