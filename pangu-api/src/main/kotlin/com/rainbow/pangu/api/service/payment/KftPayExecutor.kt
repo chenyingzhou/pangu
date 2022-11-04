@@ -28,8 +28,8 @@ class KftPayExecutor : PaymentExecutor {
     override val type: PaymentMethod.Type
         get() = PaymentMethod.Type.KFT
 
-    private val keyStorePath = "/usr/local/kft/pfx.pfx"
-    private val tempZipDir = "/usr/local/kft/zip"
+    private val keyStorePath = "/opt/conf/kft/pfx.pfx"
+    private val tempZipDir = "/opt/conf/kft/zip"
     private val methodVersion = "1.0.0-PRD"
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
