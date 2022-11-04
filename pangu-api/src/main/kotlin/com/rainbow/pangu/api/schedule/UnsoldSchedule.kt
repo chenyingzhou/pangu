@@ -28,7 +28,7 @@ class UnsoldSchedule {
         val now = LocalDateTime.now()
         val goodsList = goodsRepo.findAll().filter { now < it.primaryTime } //列出一级市场尚未开启的商品
         for (goods in goodsList) {
-            val goodsItems = goodsItemRepo.findAllByGoodsId(goods.id, Pageable.unpaged())
+            val goodsItems = goodsItemRepo.findAllByGoodsIdAndOnSaleIn(goods.id, listOf(true), Pageable.unpaged())
             val goodsItemIds = goodsItems.map { it.id }
             unsoldService.add(goods.id, goodsItemIds)
         }

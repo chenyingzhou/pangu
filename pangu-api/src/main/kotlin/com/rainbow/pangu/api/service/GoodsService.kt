@@ -39,7 +39,7 @@ class GoodsService {
 
     fun onSaleItemList(goodsId: Int, page: Int): List<GoodsItemVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(GoodsItem::price.name).ascending())
-        val goodsItemPage = goodsItemRepo.findAllByGoodsId(goodsId, pageable)
+        val goodsItemPage = goodsItemRepo.findAllByGoodsIdAndOnSaleIn(goodsId, listOf(true), pageable)
         return GoodsItemVOConv.fromEntity(goodsItemPage)
     }
 
