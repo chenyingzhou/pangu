@@ -64,7 +64,12 @@ class OrderService {
         if (goodsItemIds.size < count) {
             throw BizException("库存不足，当前库存为${unsoldService.stockNum(goodsId)}")
         }
-        return create(goodsItemIds, payParam)
+        try {
+            return create(goodsItemIds, payParam)
+        } catch (e: Throwable) {
+            unsoldService.add(goodsId, goodsItemIds)
+            throw e
+        }
     }
 
     /**

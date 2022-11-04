@@ -23,13 +23,14 @@ class LocalClientHolderFilter : Filter {
             val versionStr = httpRequest.getHeader("version") ?: ""
             val userIdStr = httpRequest.getHeader("userId") ?: httpRequest.getParameter("userId") ?: "0"
             var timestamp: Long = 0
-            var userId = 0
             try {
                 timestamp = timestampStr.toLong()
-                if (!EnvUtil.isProd) {
-                    userId = userIdStr.toInt()
-                }
-            } catch (ignored: Throwable) {
+            } catch (_: Throwable) {
+            }
+            var userId = 0
+            try {
+                if (!EnvUtil.isProd) userId = userIdStr.toInt()
+            } catch (_: Throwable) {
             }
             var version = 0
             try {
