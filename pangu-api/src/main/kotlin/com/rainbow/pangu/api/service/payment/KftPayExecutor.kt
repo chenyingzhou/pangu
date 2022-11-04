@@ -4,6 +4,7 @@ import com.lycheepay.gateway.client.GBPService
 import com.lycheepay.gateway.client.InitiativePayService
 import com.lycheepay.gateway.client.dto.gbp.BankIdentifyNoDTO
 import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayApplyReqDTO
+import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayConfirmReqDTO
 import com.lycheepay.gateway.client.security.KeystoreSignProvider
 import com.lycheepay.gateway.client.security.SignProvider
 import com.rainbow.pangu.api.config.KftConfig
@@ -133,6 +134,31 @@ class KftPayExecutor : PaymentExecutor {
             paymentOrderNo = paymentOrder.paymentOrderNo
             orderNo = paymentOrder.orderNo
         }
+    }
+
+    override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
+        val dto = SmsQuickPayConfirmReqDTO()
+        dto.reqNo = paymentOrderNo // 请求编号
+        dto.service = "kpp_sms_pay" // 接口名称，固定不变
+        dto.version = methodVersion // 接口版本号，测试:1.0.0-IEST,生产:1.0.0-PRD
+        dto.merchantId = kftConfig.proactivePayAccount // 替换成快付通提供的商户ID，测试生产不一样
+        dto.secMerchantId = "2022090205227961" // 二级商户id reqNo=1662108436298
+        dto.productNo = "1ZD00DXK"
+        dto.orderNo = paymentOrderNo // 交易编号
+        dto.smsCode = smsCode // 短信验证码
+        dto.custBindPhoneNo = phone // 持卡人开户时绑定手机号，须与相应短信快捷支付申请时一致
+        dto.confirmFlag = "1" // 确认标识 1确认支付2取消支付
+        log.info("短信快捷确认请求:{}", JacksonUtil.toJson(dto))
+        val resp = initiativePayService.smsQuickPayConfirm(dto)
+        log.info("短信快捷确认响应：{}", JacksonUtil.toJson(resp))
+        //成功响应结果：短信快捷确认响应：{"bankReturnTime":"20190304154458","reqNo":"1551685438408","status":"1"}
+        //失败响应结果：短信快捷确认响应：{"bankReturnTime":"20190304154415","errorCode":"CUST_CHANNEL_00009900","failureDetails":"失败（通用档板-交易金额为奇数）","reqNo":"1551685395192","status":"2"}
+        //短信快捷确认响应：{"bankReturnTime":"20190304154741","errorCode":"KFTSYS_CHANNEL_00009999","failureDetails":"无合适的路由处理当前交易","reqNo":"1551685601824","status":"2"}
+        val success = resp.status == "1"
+        if (!success) {
+            throw BizException(resp.failureDetails)
+        }
+        return PaymentOrder.Status.SUCCESS
     }
 
     private fun cardTypeQuery(account: String, payNo: String): String {

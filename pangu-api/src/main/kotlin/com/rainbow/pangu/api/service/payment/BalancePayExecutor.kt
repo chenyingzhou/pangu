@@ -6,6 +6,7 @@ import com.rainbow.pangu.api.service.BalanceService
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.entity.PaymentOrder
+import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.PaymentOrderRepo
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.SpringContextUtil
@@ -37,5 +38,9 @@ class BalancePayExecutor : PaymentExecutor {
             paymentOrderNo = paymentOrder.paymentOrderNo
             orderNo = paymentOrder.orderNo
         }
+    }
+
+    override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
+        throw BizException("余额支付不需要短信验证")
     }
 }
