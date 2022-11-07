@@ -12,7 +12,7 @@ class CorsFilter : Filter {
     override fun doFilter(request: ServletRequest, response: ServletResponse, filterChain: FilterChain) {
         val httpRequest = request as HttpServletRequest
         val httpResponse = response as HttpServletResponse
-        val originHost = httpRequest.getHeader("Host") ?: "*"
+        val originHost = httpRequest.getHeader("Origin") ?: "*"
         httpResponse.addHeader("Access-Control-Allow-Origin", originHost)
         httpResponse.addHeader("Access-Control-Allow-Credentials", "true")
         httpResponse.addHeader("Access-Control-Allow-Methods", "OPTIONS,GET,POST,PUT,DELETE")
