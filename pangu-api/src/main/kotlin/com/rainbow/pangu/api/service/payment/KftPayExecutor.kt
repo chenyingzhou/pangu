@@ -129,7 +129,7 @@ class KftPayExecutor : PaymentExecutor {
 
         return PaymentOrderUnverifiedVO().apply {
             status = paymentOrder.status
-            needSmsValidate = false
+            needSmsValidate = true
             paymentOrderNo = paymentOrder.paymentOrderNo
             orderNo = paymentOrder.orderNo
         }
