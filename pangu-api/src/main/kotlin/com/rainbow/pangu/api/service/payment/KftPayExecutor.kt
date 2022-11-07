@@ -87,7 +87,6 @@ class KftPayExecutor : PaymentExecutor {
             cardTypeQuery(paymentAccount.accountNo, paymentOrder.paymentOrderNo)
         }
         val dto = SmsQuickPayApplyReqDTO()
-        dto.reqNo = paymentOrder.paymentOrderNo // 请求编号
         dto.service = "kpp_sms_collect" // 接口名称，固定不变
         dto.version = methodVersion // 接口版本号，测试:1.0.0-IEST,生产:1.0.0-PRD
         dto.merchantId = kftConfig.proactivePayAccount // 替换成快付通提供的商户ID，测试生产不一样
@@ -138,7 +137,6 @@ class KftPayExecutor : PaymentExecutor {
 
     override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
         val dto = SmsQuickPayConfirmReqDTO()
-        dto.reqNo = paymentOrderNo // 请求编号
         dto.service = "kpp_sms_pay" // 接口名称，固定不变
         dto.version = methodVersion // 接口版本号，测试:1.0.0-IEST,生产:1.0.0-PRD
         dto.merchantId = kftConfig.proactivePayAccount // 替换成快付通提供的商户ID，测试生产不一样
