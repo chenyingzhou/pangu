@@ -3,16 +3,15 @@ package com.rainbow.pangu.api.controller
 import com.rainbow.pangu.annotation.LoginCheck
 import com.rainbow.pangu.api.model.param.PaySmsValidateParam
 import com.rainbow.pangu.api.model.vo.PaymentAccountVO
+import com.rainbow.pangu.api.model.vo.PaymentBankVO
 import com.rainbow.pangu.api.model.vo.PaymentMethodVO
 import com.rainbow.pangu.api.service.PayService
 import com.rainbow.pangu.base.ResultBody
+import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.threadholder.ClientInfoHolder
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import javax.annotation.Resource
 
 @RestController
@@ -25,6 +24,12 @@ class PayController {
     @Operation(summary = "支付方式列表")
     fun methodList(): ResultBody<List<PaymentMethodVO>> {
         return ResultBody.ok(payService.methodList(ClientInfoHolder.platform, ClientInfoHolder.version))
+    }
+
+    @GetMapping("/pay/bank/paymentMethodType/{paymentMethodType}")
+    @Operation(summary = "支持银行列表")
+    fun bankList(@PathVariable paymentMethodType: PaymentMethod.Type): ResultBody<List<PaymentBankVO>> {
+        return ResultBody.ok(payService.bankList(paymentMethodType))
     }
 
     @GetMapping("/pay/account")
