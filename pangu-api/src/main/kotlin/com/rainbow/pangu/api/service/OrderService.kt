@@ -157,7 +157,7 @@ class OrderService {
      *
      * @param orderInfo 订单
      */
-    private fun paid(orderInfo: OrderInfo) {
+    fun paid(orderInfo: OrderInfo) {
         if (orderInfo.paid) { // 已支付的不能重复确认
             return
         }

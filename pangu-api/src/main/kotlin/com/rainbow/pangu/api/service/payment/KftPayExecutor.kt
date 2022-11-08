@@ -11,6 +11,7 @@ import com.rainbow.pangu.api.config.KftConfig
 import com.rainbow.pangu.api.model.param.PayParam
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.entity.PaymentAccount
+import com.rainbow.pangu.entity.PaymentBank
 import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
@@ -18,6 +19,7 @@ import com.rainbow.pangu.repository.PaymentAccountRepo
 import com.rainbow.pangu.repository.PaymentOrderRepo
 import com.rainbow.pangu.util.JacksonUtil
 import com.rainbow.pangu.util.KeyUtil
+import com.rainbow.pangu.util.PaymentUtil
 import com.rainbow.pangu.util.SpringContextUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -122,8 +124,9 @@ class KftPayExecutor : PaymentExecutor {
         }
         // 更新银行账户信息
         if (bankNo != paymentAccount.bankCode) {
+            val paymentBankOpt = PaymentUtil.getBankByTypeAndCode(PaymentMethod.Type.KFT, bankNo)
             paymentAccount.bankCode = bankNo
-            paymentAccount.bankName = "TODO银行"
+            paymentAccount.bankName = paymentBankOpt.orElseGet { PaymentBank() }.bankName
             paymentAccountRepo.save(paymentAccount)
         }
 
