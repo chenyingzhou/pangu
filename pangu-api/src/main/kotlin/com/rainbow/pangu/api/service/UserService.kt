@@ -171,7 +171,7 @@ class UserService {
 
         val userPassword = userPasswordRepo.findByTypeAndUserId(type, userId).orElse(UserPassword())
         // 若原来设置过密码，则需要验证
-        if (userPassword.id != 0) {
+        if (userPassword.id != 0 && userPassword.password.isNotBlank()) {
             if (oldPassword.isNotBlank()) {
                 // 使用原密码验证
                 if (oldPassword != userPassword.password) {
