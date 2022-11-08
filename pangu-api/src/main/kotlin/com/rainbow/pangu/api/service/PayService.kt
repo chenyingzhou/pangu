@@ -14,6 +14,7 @@ import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.repository.OrderInfoRepo
 import com.rainbow.pangu.repository.PaymentAccountRepo
 import com.rainbow.pangu.repository.PaymentOrderRepo
+import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.PaymentUtil
 import com.rainbow.pangu.util.SpringContextUtil
 import org.springframework.stereotype.Service
@@ -63,8 +64,18 @@ class PayService {
             if (paymentOrder.accountId > 0) {
                 val paymentAccountOpt = paymentAccountRepo.findById(paymentOrder.accountId)
                 if (paymentAccountOpt.isPresent) {
-                    paymentAccountOpt.get().paid = true
-                    paymentAccountRepo.save(paymentAccountOpt.get())
+                    val paymentAccount = paymentAccountOpt.get()
+                    paymentAccount.paid = true
+                    paymentAccountRepo.save(paymentAccount)
+                    // 更新用户实名信息(耦合)
+                    val userRepo = SpringContextUtil.getBean(UserRepo::class)
+                    val user = userRepo.findById(paymentAccount.userId).orElseGet { null }
+                    if (user != null && !user.realNameChecked) {
+                        user.realName = paymentAccount.accountName
+                        user.idCardNo = paymentAccount.idCardNo
+                        user.realNameChecked = true
+                        userRepo.save(user)
+                    }
                 }
             }
             // 更新订单状态(耦合)
