@@ -17,6 +17,7 @@ import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.PaymentAccountRepo
 import com.rainbow.pangu.repository.PaymentOrderRepo
+import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.JacksonUtil
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.PaymentUtil
@@ -35,6 +36,7 @@ class KftPayExecutor : PaymentExecutor {
     private val methodVersion = "1.0.0-PRD"
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
+    val userRepo: UserRepo by lazy { SpringContextUtil.getBean(UserRepo::class) }
     val paymentOrderRepo: PaymentOrderRepo by lazy { SpringContextUtil.getBean(PaymentOrderRepo::class) }
     val paymentAccountRepo: PaymentAccountRepo by lazy { SpringContextUtil.getBean(PaymentAccountRepo::class) }
     val kftConfig: KftConfig by lazy { SpringContextUtil.getBean(KftConfig::class) }
@@ -71,6 +73,16 @@ class KftPayExecutor : PaymentExecutor {
         }
         if (paymentAccount.userId != payParam.userId) {
             throw BizException("银行卡信息错误")
+        }
+        // 新增银行卡时，校验银行卡是否与实名信息匹配
+        if (!paymentAccount.paid) {
+            val user = userRepo.findById(payParam.userId).orElseThrow()
+            if (user.realNameChecked) {
+                if (user.idCardNo != paymentAccount.idCardNo || user.realName != paymentAccount.accountName) {
+                    val realName = "*".repeat(user.realName.length - 1) + user.realName.last()
+                    throw BizException("持卡人须与实名认证一致，实名为：$realName")
+                }
+            }
         }
         // 保存支付订单
         val paymentOrder = PaymentOrder().apply {
