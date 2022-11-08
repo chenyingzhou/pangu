@@ -5,6 +5,8 @@ import com.lycheepay.gateway.client.InitiativePayService
 import com.lycheepay.gateway.client.dto.gbp.BankIdentifyNoDTO
 import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayApplyReqDTO
 import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayConfirmReqDTO
+import com.lycheepay.gateway.client.dto.initiativepay.TradeQueryReqDTO
+import com.lycheepay.gateway.client.dto.initiativepay.TradeQueryRespDTO
 import com.lycheepay.gateway.client.security.KeystoreSignProvider
 import com.lycheepay.gateway.client.security.SignProvider
 import com.rainbow.pangu.api.config.KftConfig
@@ -172,6 +174,25 @@ class KftPayExecutor : PaymentExecutor {
             throw BizException(resp.failureDetails)
         }
         return PaymentOrder.Status.SUCCESS
+    }
+
+    override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
+        val dto = TradeQueryReqDTO()
+        dto.service = "kpp_trade_record_query" //接口名称,固定不变
+        dto.version = methodVersion
+        dto.productNo = "2GCA0AAF"
+        dto.merchantId = kftConfig.queryAccount
+        dto.originalOrderNo = paymentOrderNo
+        log.info("支付查询请求:{}", JacksonUtil.toJson(dto))
+        val resp: TradeQueryRespDTO = initiativePayService.tradeQuery(dto)
+        log.info("支付查询响应：{}", JacksonUtil.toJson(resp))
+        // 成功响应结果：查询响应：{"channelNo":"4200000271201901293719046956","checkDate":"20190129","checkStatus":"1","errorCode":"CUST_CHANNEL_00000000","failureDetails":"支付成功!","kftTradeTime":"20190129095045","orderNo":"1548726848286","reqNo":"1551686404717","settlementAmount":"1","status":"1"}
+        // 失败响应结果：查询响应：{"errorCode":"CASHIER_3101","failureDetails":"交易订单不存在","orderNo":"15487268482861","reqNo":"1551686501927","status":"2"}
+        return when (resp.status) {
+            "1" -> PaymentOrder.Status.SUCCESS
+            "2" -> PaymentOrder.Status.FAIL
+            else -> PaymentOrder.Status.PENDING
+        }
     }
 
     private fun cardTypeQuery(account: String, payNo: String): String {

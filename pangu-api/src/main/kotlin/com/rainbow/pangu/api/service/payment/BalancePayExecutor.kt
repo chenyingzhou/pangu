@@ -43,4 +43,8 @@ class BalancePayExecutor : PaymentExecutor {
     override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
         throw BizException("余额支付不需要短信验证")
     }
+
+    override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
+        throw BizException("余额支付不需要查询状态")
+    }
 }

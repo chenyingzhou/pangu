@@ -18,4 +18,8 @@ class AliPayExecutor : PaymentExecutor {
     override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
         TODO("Not yet implemented")
     }
+
+    override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
+        TODO("Not yet implemented")
+    }
 }

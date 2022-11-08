@@ -6,4 +6,6 @@ import java.util.*
 
 interface OrderInfoRepo : BaseRepo<OrderInfo> {
     fun findByOrderNo(orderNo: String): Optional<OrderInfo>
+
+    fun findByStatusIn(statusList: Iterable<OrderInfo.Status>): List<OrderInfo>
 }

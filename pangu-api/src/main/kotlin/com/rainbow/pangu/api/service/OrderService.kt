@@ -190,6 +190,17 @@ class OrderService {
         }
     }
 
+    /**
+     * 订单取消
+     *
+     * @param orderInfo 订单
+     */
+    fun cancel(orderInfo: OrderInfo) {
+    }
+
+    fun check(orderInfo: OrderInfo) {
+    }
+
     fun itemList(goodsId: Int, page: Int): List<OrderItemVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
         val items = orderItemRepo.findAllByGoodsIdAndStatusIn(goodsId, listOf(OrderInfo.Status.SUCCESS), pageable)

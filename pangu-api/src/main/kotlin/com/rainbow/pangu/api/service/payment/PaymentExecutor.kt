@@ -13,4 +13,7 @@ interface PaymentExecutor {
 
     // 短信确认
     fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status
+
+    // 查询状态
+    fun queryStatus(paymentOrderNo: String): PaymentOrder.Status
 }
