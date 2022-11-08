@@ -1,6 +1,7 @@
 package com.rainbow.pangu.aspect
 
 import com.rainbow.pangu.annotation.AsyncCache
+import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.HexUtil.toHex
 import com.rainbow.pangu.util.JacksonUtil.toObject
 import com.rainbow.pangu.util.RedisUtil
@@ -21,6 +22,9 @@ class AsyncCacheAspect {
     @Around("@annotation(asyncCache)")
     @Throws(Throwable::class)
     fun cacheAround(joinPoint: ProceedingJoinPoint, asyncCache: AsyncCache): Any? {
+        if (!EnvUtil.isProd) {
+            return joinPoint.proceed()
+        }
         val className = joinPoint.signature.declaringTypeName
         val methodName = joinPoint.signature.name
         val sb = StringBuilder()

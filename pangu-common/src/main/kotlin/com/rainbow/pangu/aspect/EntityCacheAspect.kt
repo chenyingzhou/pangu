@@ -4,6 +4,7 @@ import com.rainbow.pangu.annotation.EntityCache
 import com.rainbow.pangu.base.BaseEntity
 import com.rainbow.pangu.base.BaseRepo
 import com.rainbow.pangu.threadholder.EntityHolder
+import com.rainbow.pangu.util.EnvUtil
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -23,6 +24,9 @@ class EntityCacheAspect {
     @Around("@annotation(entityCache)")
     @Throws(Throwable::class)
     fun entityCacheAround(joinPoint: ProceedingJoinPoint, entityCache: EntityCache): Any? {
+        if (!EnvUtil.isProd) {
+            return joinPoint.proceed()
+        }
         // 获取参数，且不处理无参数方法
         val arg = (if (joinPoint.args.isNotEmpty()) joinPoint.args[0] else null) ?: return joinPoint.proceed()
         // 使用缓存
