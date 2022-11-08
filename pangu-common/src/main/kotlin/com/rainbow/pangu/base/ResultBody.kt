@@ -1,5 +1,6 @@
 package com.rainbow.pangu.base
 
+import com.rainbow.pangu.exception.BizExceptionEnum
 import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
@@ -7,6 +8,9 @@ import java.io.Serializable
 class ResultBody<T> : Serializable {
     @Schema(description = "错误码")
     var code = 0
+
+    @Schema(description = "错误值")
+    var biz: BizExceptionEnum? = null
 
     @Schema(description = "提示信息")
     var msg = ""
@@ -21,10 +25,11 @@ class ResultBody<T> : Serializable {
             return body
         }
 
-        fun fail(msg: String, code: Int): ResultBody<*> {
+        fun fail(msg: String, bizExceptionEnum: BizExceptionEnum): ResultBody<*> {
             val body: ResultBody<*> = ResultBody<Any>()
             body.msg = msg
-            body.code = code
+            body.biz = bizExceptionEnum
+            body.code = bizExceptionEnum.code
             return body
         }
     }

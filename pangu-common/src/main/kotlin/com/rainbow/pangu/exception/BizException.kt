@@ -4,6 +4,9 @@ class BizException : RuntimeException {
 
     private val bizExceptionEnum: BizExceptionEnum
 
+    val biz
+        get() = bizExceptionEnum
+
     val code
         get() = bizExceptionEnum.code
 
