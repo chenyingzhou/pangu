@@ -2,6 +2,7 @@ package com.rainbow.pangu.api.model.vo.converter
 
 import com.rainbow.pangu.api.model.vo.PaymentAccountVO
 import com.rainbow.pangu.entity.PaymentAccount
+import com.rainbow.pangu.util.PaymentUtil
 
 object PaymentAccountVOConv : Converter<PaymentAccount, PaymentAccountVO> {
     override fun fromEntity(s: PaymentAccount): PaymentAccountVO {
@@ -13,7 +14,11 @@ object PaymentAccountVOConv : Converter<PaymentAccount, PaymentAccountVO> {
         vo.idCardNo = "*".repeat(s.idCardNo.length - 4) + s.idCardNo.substring(s.idCardNo.length - 4)
         vo.accountNo = "*".repeat(s.accountNo.length - 4) + s.accountNo.substring(s.accountNo.length - 4)
         vo.bankCode = s.bankCode
-        vo.bankName = s.bankName
+        val paymentBankOpt = PaymentUtil.getBankByTypeAndCode(s.methodType, s.bankCode)
+        if (paymentBankOpt.isPresent) {
+            vo.bankName = paymentBankOpt.get().bankName
+            vo.bankIcon = paymentBankOpt.get().bankIcon
+        }
         return vo
     }
 }

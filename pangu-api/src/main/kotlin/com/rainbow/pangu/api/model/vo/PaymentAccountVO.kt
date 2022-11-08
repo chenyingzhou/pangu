@@ -27,5 +27,8 @@ class PaymentAccountVO {
     var bankCode = ""
 
     @Schema(description = "银行名称")
-    var bankName = ""
+    var bankName = "中国银联"
+
+    @Schema(description = "银行图标")
+    var bankIcon = "/bank-icon/中国银联.png"
 }
