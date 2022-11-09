@@ -12,10 +12,7 @@ import com.rainbow.pangu.entity.OrderInfo
 import com.rainbow.pangu.entity.OrderItem
 import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
-import com.rainbow.pangu.repository.GoodsItemRepo
-import com.rainbow.pangu.repository.GoodsRepo
-import com.rainbow.pangu.repository.OrderInfoRepo
-import com.rainbow.pangu.repository.OrderItemRepo
+import com.rainbow.pangu.repository.*
 import com.rainbow.pangu.util.KeyUtil
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -47,6 +44,9 @@ class OrderService {
 
     @Resource
     lateinit var paymentExecutors: List<PaymentExecutor>
+
+    @Resource
+    lateinit var paymentOrderRepo: PaymentOrderRepo
 
     /**
      * 根据商品创建订单(一级市场)
@@ -196,9 +196,45 @@ class OrderService {
      * @param orderInfo 订单
      */
     fun cancel(orderInfo: OrderInfo) {
+        if (orderInfo.paid) {
+            return
+        }
+        val orderItems = orderItemRepo.findAllByOrderId(orderInfo.id)
+        val goodsItems = goodsItemRepo.findAllById(orderItems.map { it.goodsItemId })
+        goodsItems.forEach { it.locked = false }
+        goodsItemRepo.saveAll(goodsItems)
+        orderInfo.status = OrderInfo.Status.FAIL
+        orderInfoRepo.save(orderInfo)
+        orderItems.forEach { it.status = OrderInfo.Status.FAIL }
+        orderItemRepo.saveAll(orderItems)
+        // 从未售出的藏品，加入到未售出资产集合
+        for (goodsItem in goodsItems) {
+            if (goodsItem.userId == 0) {
+                unsoldService.add(goodsItem.goodsId, listOf(goodsItem.id))
+            }
+        }
     }
 
+    /**
+     * 检查订单支付状态，根据支付状态执行确认或取消
+     */
     fun check(orderInfo: OrderInfo) {
+        if (orderInfo.status != OrderInfo.Status.INIT) {
+            return
+        }
+        val paymentOrder = paymentOrderRepo.findByOrderNo(orderInfo.orderNo).orElseThrow()
+        val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
+        val payStatus = paymentExecutor.queryStatus(paymentOrder.paymentOrderNo)
+        if (payStatus == PaymentOrder.Status.SUCCESS) {
+            // 支付成功
+            paid(orderInfo)
+        } else if (payStatus == PaymentOrder.Status.FAIL) {
+            // 支付失败
+            cancel(orderInfo)
+        } else if (orderInfo.createdTime < LocalDateTime.now().minusMinutes(3)) {
+            // 超时未支付
+            cancel(orderInfo)
+        }
     }
 
     fun itemList(goodsId: Int, page: Int): List<OrderItemVO> {

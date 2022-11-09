@@ -11,6 +11,7 @@ import com.rainbow.pangu.constant.Platform
 import com.rainbow.pangu.entity.PaymentAccount
 import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.entity.PaymentOrder
+import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.OrderInfoRepo
 import com.rainbow.pangu.repository.PaymentAccountRepo
 import com.rainbow.pangu.repository.PaymentOrderRepo
@@ -18,6 +19,7 @@ import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.PaymentUtil
 import com.rainbow.pangu.util.SpringContextUtil
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import javax.annotation.Resource
 import javax.transaction.Transactional
 
@@ -51,6 +53,9 @@ class PayService {
 
     fun smsValidate(paymentOrderNo: String, smsCode: String): Boolean {
         val paymentOrder = paymentOrderRepo.findByPaymentOrderNo(paymentOrderNo).orElseThrow()
+        if (paymentOrder.createdTime < LocalDateTime.now().minusMinutes(2)) {
+            throw BizException("支付超时")
+        }
         val phoneNo = paymentAccountRepo.findById(paymentOrder.accountId).orElseGet { PaymentAccount() }.phoneNo
         val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
         val status = paymentExecutor.confirm(paymentOrderNo, phoneNo, smsCode)

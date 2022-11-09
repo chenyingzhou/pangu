@@ -6,4 +6,6 @@ import java.util.*
 
 interface PaymentOrderRepo : BaseRepo<PaymentOrder> {
     fun findByPaymentOrderNo(paymentOrderNo: String): Optional<PaymentOrder>
+
+    fun findByOrderNo(orderNo: String): Optional<PaymentOrder>
 }
