@@ -12,7 +12,11 @@ import javax.persistence.*
 @Table(appliesTo = "order_info", comment = "订单")
 @javax.persistence.Table(
     name = "order_info",
-    indexes = [Index(name = "idx_user_id", columnList = "userId"), Index(name = "idx_status", columnList = "status")]
+    indexes = [
+        Index(name = "idx_user_id", columnList = "userId"),
+        Index(name = "idx_status", columnList = "status"),
+        Index(name = "idx_order_no", columnList = "orderNo"),
+    ]
 )
 class OrderInfo : BaseEntity() {
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '订单号'")

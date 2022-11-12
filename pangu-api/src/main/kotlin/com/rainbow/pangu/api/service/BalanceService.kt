@@ -4,10 +4,12 @@ import com.rainbow.pangu.api.model.param.PayParam
 import com.rainbow.pangu.api.model.vo.BalanceBillVO
 import com.rainbow.pangu.api.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.api.model.vo.converter.BalanceBillVOConv
+import com.rainbow.pangu.api.service.payment.PaymentExecutor
 import com.rainbow.pangu.constant.KeyTemplate
 import com.rainbow.pangu.entity.Balance
 import com.rainbow.pangu.entity.BalanceBill
 import com.rainbow.pangu.entity.PaymentMethod
+import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.BalanceBillRepo
 import com.rainbow.pangu.repository.BalanceRepo
@@ -27,6 +29,9 @@ class BalanceService {
 
     @Resource
     lateinit var balanceBillRepo: BalanceBillRepo
+
+    @Resource
+    lateinit var paymentExecutors: List<PaymentExecutor>
 
     /**
      * 获取用户余额，若不存在则创建
@@ -122,12 +127,17 @@ class BalanceService {
             throw BizException("不支持该支付方式")
         }
         val balanceBill = add(BalanceBill.Type.RECHARGE, payParam.userId, amount)
-        // TODO 使用KFT
-        return PaymentOrderUnverifiedVO().apply {
-            orderNo = balanceBill.billNo
-            paymentOrderNo = ""
-            needSmsValidate = true
+        // 申请支付
+        payParam.orderNo = balanceBill.billNo
+        payParam.amount = balanceBill.amount
+        val paymentExecutor = paymentExecutors.find { it.type == payParam.paymentMethodType }!!
+        val paymentOrderUnverifiedVO = paymentExecutor.apply(payParam)
+        // 如果支付状态为成功(若存在这种可能性)，直接确认充值状态
+        if (paymentOrderUnverifiedVO.status == PaymentOrder.Status.SUCCESS) {
+            balanceBill.status = BalanceBill.Status.SUCCESS
+            balanceBillRepo.save(balanceBill)
         }
+        return paymentOrderUnverifiedVO
     }
 
     fun withdraw(amount: Long, payParam: PayParam): PaymentOrderUnverifiedVO {

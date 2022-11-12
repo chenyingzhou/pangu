@@ -86,8 +86,10 @@ class PayService {
             // 更新订单状态(耦合)
             val orderInfoRepo = SpringContextUtil.getBean(OrderInfoRepo::class)
             val orderService = SpringContextUtil.getBean(OrderService::class)
-            val orderInfo = orderInfoRepo.findByOrderNo(paymentOrder.orderNo).orElseThrow()
-            orderService.paid(orderInfo)
+            val orderInfoOpt = orderInfoRepo.findByOrderNo(paymentOrder.orderNo)
+            if (orderInfoOpt.isPresent) {
+                orderService.paid(orderInfoOpt.get())
+            }
         }
         return success
     }

@@ -15,6 +15,7 @@ import javax.persistence.*
     indexes = [
         Index(name = "idx_user_id_created_time", columnList = "userId,createdTime"),
         Index(name = "idx_bill_no", columnList = "billNo"),
+        Index(name = "idx_status", columnList = "status"),
     ]
 )
 class BalanceBill : BaseEntity() {
@@ -72,8 +73,6 @@ class BalanceBill : BaseEntity() {
     }
 
     enum class Status {
-        INIT,
-        SUCCESS,
-        FAIL,
+        INIT, SUCCESS, FAIL
     }
 }
