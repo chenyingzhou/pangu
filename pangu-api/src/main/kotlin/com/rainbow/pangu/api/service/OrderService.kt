@@ -225,6 +225,12 @@ class OrderService {
         val paymentOrder = paymentOrderRepo.findByOrderNo(orderInfo.orderNo).orElseThrow()
         val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
         val payStatus = paymentExecutor.queryStatus(paymentOrder.paymentOrderNo)
+        paymentOrder.let {
+            if (paymentOrder.status != payStatus) {
+                paymentOrder.status = payStatus
+                paymentOrderRepo.save(paymentOrder)
+            }
+        }
         if (payStatus == PaymentOrder.Status.SUCCESS) {
             // 支付成功
             paid(orderInfo)

@@ -181,6 +181,10 @@ class KftPayExecutor : PaymentExecutor {
     }
 
     override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
+        val paymentOrder = paymentOrderRepo.findByPaymentOrderNo(paymentOrderNo).orElseThrow()
+        if (paymentOrder.status == PaymentOrder.Status.SUCCESS || paymentOrder.status == PaymentOrder.Status.FAIL) {
+            return paymentOrder.status
+        }
         if (kftConfig.mock) {
             return PaymentOrder.Status.FAIL
         }

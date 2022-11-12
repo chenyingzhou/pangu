@@ -10,4 +10,6 @@ interface BalanceBillRepo : BaseRepo<BalanceBill> {
     fun findAllByUserId(userId: Int, pageable: Pageable): Page<BalanceBill>
 
     fun findByBillNo(billNo: String): Optional<BalanceBill>
+
+    fun findByStatusIn(status: Collection<BalanceBill.Status>): List<BalanceBill>
 }

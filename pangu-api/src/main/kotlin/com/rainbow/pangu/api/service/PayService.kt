@@ -12,10 +12,7 @@ import com.rainbow.pangu.entity.PaymentAccount
 import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
-import com.rainbow.pangu.repository.OrderInfoRepo
-import com.rainbow.pangu.repository.PaymentAccountRepo
-import com.rainbow.pangu.repository.PaymentOrderRepo
-import com.rainbow.pangu.repository.UserRepo
+import com.rainbow.pangu.repository.*
 import com.rainbow.pangu.util.PaymentUtil
 import com.rainbow.pangu.util.SpringContextUtil
 import org.springframework.stereotype.Service
@@ -89,6 +86,13 @@ class PayService {
             val orderInfoOpt = orderInfoRepo.findByOrderNo(paymentOrder.orderNo)
             if (orderInfoOpt.isPresent) {
                 orderService.paid(orderInfoOpt.get())
+            }
+            // 更新充值状态(耦合)
+            val balanceBillRepo = SpringContextUtil.getBean(BalanceBillRepo::class)
+            val balanceService = SpringContextUtil.getBean(BalanceService::class)
+            val balanceBillOpt = balanceBillRepo.findByBillNo(paymentOrder.orderNo)
+            if (balanceBillOpt.isPresent) {
+                balanceService.check(balanceBillOpt.get())
             }
         }
         return success

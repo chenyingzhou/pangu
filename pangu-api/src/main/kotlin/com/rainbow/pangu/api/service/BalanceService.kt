@@ -13,6 +13,7 @@ import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.repository.BalanceBillRepo
 import com.rainbow.pangu.repository.BalanceRepo
+import com.rainbow.pangu.repository.PaymentOrderRepo
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.LockUtil
 import org.springframework.data.domain.PageRequest
@@ -29,6 +30,9 @@ class BalanceService {
 
     @Resource
     lateinit var balanceBillRepo: BalanceBillRepo
+
+    @Resource
+    lateinit var paymentOrderRepo: PaymentOrderRepo
 
     @Resource
     lateinit var paymentExecutors: List<PaymentExecutor>
@@ -151,5 +155,48 @@ class BalanceService {
             paymentOrderNo = ""
             needSmsValidate = false
         }
+    }
+
+    /**
+     * 检查余额明细状态，根据支付状态执行确认或取消
+     */
+    fun check(balanceBill: BalanceBill) {
+        if (balanceBill.status != BalanceBill.Status.INIT) {
+            return
+        }
+        val addTypes = setOf(
+            BalanceBill.Type.RECHARGE, BalanceBill.Type.SALE, BalanceBill.Type.ADD, BalanceBill.Type.WITHDRAW_REFUND
+        )
+        // 仅处理增加的情况
+        if (!addTypes.contains(balanceBill.type)) {
+            return
+        }
+        if (balanceBill.type == BalanceBill.Type.RECHARGE) {
+            // 充值需要校验状态
+            val paymentOrder = paymentOrderRepo.findByOrderNo(balanceBill.billNo).orElseThrow()
+            val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
+            val payStatus = paymentExecutor.queryStatus(paymentOrder.paymentOrderNo)
+            if (paymentOrder.status != payStatus) {
+                paymentOrder.status = payStatus
+                paymentOrderRepo.save(paymentOrder)
+            }
+            // 充值不成功的不参与后续步骤
+            if (payStatus != PaymentOrder.Status.SUCCESS) {
+                if (payStatus == PaymentOrder.Status.FAIL) {
+                    balanceBill.status = BalanceBill.Status.FAIL
+                    balanceBillRepo.save(balanceBill)
+                }
+                return
+            }
+        }
+        val balance = getOrCreateBalance(balanceBill.userId)
+        balanceBill.let {
+            it.status = BalanceBill.Status.SUCCESS
+            it.before = balance.amount
+            it.after = balance.amount + it.amount
+            balanceBillRepo.save(balanceBill)
+        }
+        balance.amount = balance.amount + balanceBill.amount
+        balanceRepo.save(balance)
     }
 }
