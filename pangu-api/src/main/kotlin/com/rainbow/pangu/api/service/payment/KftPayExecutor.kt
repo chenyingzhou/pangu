@@ -3,10 +3,7 @@ package com.rainbow.pangu.api.service.payment
 import com.lycheepay.gateway.client.GBPService
 import com.lycheepay.gateway.client.InitiativePayService
 import com.lycheepay.gateway.client.dto.gbp.BankIdentifyNoDTO
-import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayApplyReqDTO
-import com.lycheepay.gateway.client.dto.initiativepay.SmsQuickPayConfirmReqDTO
-import com.lycheepay.gateway.client.dto.initiativepay.TradeQueryReqDTO
-import com.lycheepay.gateway.client.dto.initiativepay.TradeQueryRespDTO
+import com.lycheepay.gateway.client.dto.initiativepay.*
 import com.lycheepay.gateway.client.security.KeystoreSignProvider
 import com.lycheepay.gateway.client.security.SignProvider
 import com.rainbow.pangu.api.config.KftConfig
@@ -128,7 +125,11 @@ class KftPayExecutor : PaymentExecutor {
         dto.isGuarantee = "0" // 是否担保交易,1:是，0:否
         dto.isSplit = "0" // 是否分账交易,1:是，0：否 ，
         log.info("短信申请(payNo:${paymentOrder.paymentOrderNo})支付参数:${JacksonUtil.toJson(dto)}")
-        val resp = initiativePayService.smsQuickPayApply(dto)
+        val resp = if (kftConfig.mock) {
+            SmsQuickPayApplyRespDTO().apply { status = "7" }
+        } else {
+            initiativePayService.smsQuickPayApply(dto)
+        }
         log.info("短信申请(payNo:${paymentOrder.paymentOrderNo})支付响应:${JacksonUtil.toJson(resp)}")
         // 成功响应结果：短信快捷申请响应：{"reqNo":"1551684624243","status":"7"}
         // 失败响应结果：短信快捷申请响应：{"errorCode":"CASHIER_3136","failureDetails":"信用卡有效期或者CVN2码不能为空","reqNo":"1551684651417","status":"2"}
@@ -153,6 +154,9 @@ class KftPayExecutor : PaymentExecutor {
     }
 
     override fun confirm(paymentOrderNo: String, phone: String, smsCode: String): PaymentOrder.Status {
+        if (kftConfig.mock) {
+            return PaymentOrder.Status.SUCCESS
+        }
         val dto = SmsQuickPayConfirmReqDTO()
         dto.service = "kpp_sms_pay" // 接口名称，固定不变
         dto.version = methodVersion // 接口版本号，测试:1.0.0-IEST,生产:1.0.0-PRD
@@ -177,6 +181,9 @@ class KftPayExecutor : PaymentExecutor {
     }
 
     override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
+        if (kftConfig.mock) {
+            return PaymentOrder.Status.FAIL
+        }
         val dto = TradeQueryReqDTO()
         dto.service = "kpp_trade_record_query" //接口名称,固定不变
         dto.version = methodVersion
@@ -196,6 +203,9 @@ class KftPayExecutor : PaymentExecutor {
     }
 
     private fun cardTypeQuery(account: String, payNo: String): String {
+        if (kftConfig.mock) {
+            return "MOCK"
+        }
         val dto = BankIdentifyNoDTO()
         dto.service = "gbp_check_bank_identify_no_info"
         dto.version = methodVersion // 接口版本号，测试:1.0.0-IEST,生产:1.0.0-PRD

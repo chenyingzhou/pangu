@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component
 @Component
 @ConfigurationProperties(prefix = "kft")
 class KftConfig {
+    // 是否mock
+    var mock = false
+
     var keyStorePassword = ""
     var keyPassword = ""
     var clientIp = ""
