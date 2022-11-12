@@ -21,7 +21,7 @@ class UnsoldSchedule {
     @Resource
     lateinit var unsoldService: UnsoldService
 
-    @Scheduled(cron = "0 5 * * * ?")
+    @Scheduled(cron = "0 */5 * * * ?")
 //    @Scheduled(fixedDelay = 1L)
     @ScheduleLocker
     fun add() {
