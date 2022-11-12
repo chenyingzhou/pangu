@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import javax.annotation.Resource
 import javax.transaction.Transactional
+import kotlin.math.absoluteValue
 
 @Service
 @Transactional(rollbackOn = [Exception::class])
@@ -99,7 +100,7 @@ class BalanceService {
         val subTypes = setOf(
             BalanceBill.Type.WITHDRAW, BalanceBill.Type.PAY, BalanceBill.Type.SUBTRACT
         )
-        if (subTypes.contains(type) && balance.amount < amount) {
+        if (subTypes.contains(type) && balance.amount < amount.absoluteValue) {
             throw BizException("余额不足")
         }
         // 生成钱包明细
