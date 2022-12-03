@@ -12,6 +12,8 @@ import javax.persistence.Entity
 @Table(appliesTo = "demo", comment = "DEMO")
 @javax.persistence.Table(name = "demo")
 class Demo : BaseEntity() {
+    companion object : BaseEntityCompanion<Demo>
+
     @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '名称'")
     var name = ""
 

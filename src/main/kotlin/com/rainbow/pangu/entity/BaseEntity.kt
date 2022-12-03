@@ -1,8 +1,13 @@
 package com.rainbow.pangu.entity
 
+import com.rainbow.pangu.enhance.threadholder.EntityHolder
+import com.rainbow.pangu.util.AppCtxtUtil
 import org.hibernate.Hibernate
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import java.time.LocalDateTime
 import javax.persistence.*
+import kotlin.reflect.KClass
 
 @MappedSuperclass
 abstract class BaseEntity {
@@ -60,4 +65,30 @@ abstract class BaseEntity {
         return "BaseEntity(id=$id, deleted=$deleted, version=$version, createdTime=$createdTime, updatedTime=$updatedTime)"
     }
 
+    fun save() {
+        val repository = repo(this::class) as JpaRepository<BaseEntity, Int>
+        repository.save(this)
+        EntityHolder.deleteCache(this::class, listOf(this.id))
+    }
+
+    fun delete() {
+        val repository = repo(this::class) as JpaRepository<BaseEntity, Int>
+        repository.delete(this)
+        EntityHolder.deleteCache(this::class, listOf(this.id))
+    }
+
+    companion object {
+        private val repos = HashMap<KClass<*>, JpaRepository<*, Int>>()
+        fun <Entity : Any> repo(entityClass: KClass<Entity>): JpaRepository<Entity, Int> {
+            if (!repos.containsKey(entityClass)) {
+                synchronized(repos) {
+                    if (!repos.containsKey(entityClass)) {
+                        val em = AppCtxtUtil.getBean(EntityManager::class)
+                        repos[entityClass] = SimpleJpaRepository(entityClass.java, em)
+                    }
+                }
+            }
+            return repos[entityClass] as JpaRepository<Entity, Int>
+        }
+    }
 }
