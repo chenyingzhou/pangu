@@ -1,5 +1,7 @@
 package com.rainbow.pangu.entity
 
+import com.rainbow.pangu.enhance.annotation.ActiveRecord
+import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
@@ -17,36 +19,49 @@ import javax.persistence.*
         Index(name = "idx_order_no", columnList = "orderNo"),
     ]
 )
-class OrderInfo : BaseEntity() {
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '订单号'")
+class OrderInfo : ActiveRecordEntity() {
+    @ActiveRecord
+    companion object : ActiveRecordCompanion<OrderInfo>
+
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("订单号")
     var orderNo = ""
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '用户ID'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("用户ID")
     var userId = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '商品ID'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("商品ID")
     var goodsId = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '商品数量'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("商品数量")
     var goodsCount = 0
 
-    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0' COMMENT '金额'")
+    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0'")
+    @Comment("金额")
     var amount = 0L
 
-    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0' COMMENT '卖方手续费'")
+    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0'")
+    @Comment("卖方手续费")
     var sellerFee = 0L
 
-    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0' COMMENT '买方手续费'")
+    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0'")
+    @Comment("买方手续费")
     var buyerFee = 0L
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '状态(INIT/SUCCESS/FAIL)'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("状态(INIT/SUCCESS/FAIL)")
     var status = Status.INIT
 
-    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0' COMMENT '是否支付成功'")
+    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0'")
+    @Comment("是否支付成功")
     var paid = false
 
-    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0' COMMENT '是否退款'")
+    @Column(nullable = false, columnDefinition = "tinyint DEFAULT '0'")
+    @Comment("是否退款")
     var refunded = false
 
     override fun toString(): String {

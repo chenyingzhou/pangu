@@ -1,6 +1,6 @@
 package com.rainbow.pangu.repository.spec
 
-import com.rainbow.pangu.entity.BaseEntity
+import com.rainbow.pangu.entity.ActiveRecordEntity
 import org.springframework.data.jpa.domain.Specification
 import javax.persistence.criteria.CriteriaBuilder
 import javax.persistence.criteria.CriteriaQuery
@@ -8,7 +8,7 @@ import javax.persistence.criteria.Predicate
 import javax.persistence.criteria.Root
 import kotlin.reflect.KProperty1
 
-class SpecBuilder<T : BaseEntity> {
+class SpecBuilder<T : ActiveRecordEntity> {
     private val params: MutableList<Param> = ArrayList()
     private val and: MutableList<SpecBuilder<T>> = ArrayList()
     private val or: MutableList<SpecBuilder<T>> = ArrayList()

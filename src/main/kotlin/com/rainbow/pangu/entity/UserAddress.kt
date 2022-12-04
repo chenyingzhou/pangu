@@ -1,5 +1,7 @@
 package com.rainbow.pangu.entity
 
+import com.rainbow.pangu.enhance.annotation.ActiveRecord
+import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
@@ -17,17 +19,24 @@ import javax.persistence.Index
         Index(name = "idx_user_id", columnList = "userId", unique = true),
     ],
 )
-class UserAddress : BaseEntity() {
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '用户ID'")
+class UserAddress : ActiveRecordEntity() {
+    @ActiveRecord
+    companion object : ActiveRecordCompanion<UserAddress>
+
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("用户ID")
     var userId = 0
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '姓名'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("姓名")
     var name = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '手机号'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("手机号")
     var phoneNo = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '地址'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("地址")
     var address = ""
 
     override fun toString(): String {

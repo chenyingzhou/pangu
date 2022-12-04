@@ -2,6 +2,8 @@ package com.rainbow.pangu.entity
 
 import com.rainbow.pangu.constant.DefaultValue.MAX_TIME
 import com.rainbow.pangu.constant.DefaultValue.MIN_TIME
+import com.rainbow.pangu.enhance.annotation.ActiveRecord
+import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
@@ -16,74 +18,97 @@ import javax.persistence.Enumerated
 @SQLDelete(sql = "update `goods` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "goods", comment = "商品")
 @javax.persistence.Table(name = "goods")
-class Goods : BaseEntity() {
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '创作者ID'")
+class Goods : ActiveRecordEntity() {
+    @ActiveRecord
+    companion object : ActiveRecordCompanion<Goods>
+
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("创作者ID")
     var creatorId = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '系列ID(预留)'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("系列ID(预留)")
     var categoryId = 0
 
-    @Column(name = "`name`", nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '名称'")
+    @Column(name = "`name`", nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("名称")
     var name = ""
 
-    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0' COMMENT '发行价(分)'")
+    @Column(nullable = false, columnDefinition = "bigint DEFAULT '0'")
+    @Comment("发行价(分)")
     var initPrice = 0L
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '发行数量'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("发行数量")
     var initCount = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '真实数量'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("真实数量")
     var realCount = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '藏品(展示)数量'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("藏品(展示)数量")
     var nftCount = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '卖方手续费率(万分比)'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("卖方手续费率(万分比)")
     var sellerFeeRate = 0
 
-    @Column(nullable = false, columnDefinition = "int DEFAULT '0' COMMENT '买方手续费率(万分比)'")
+    @Column(nullable = false, columnDefinition = "int DEFAULT '0'")
+    @Comment("买方手续费率(万分比)")
     var buyerFeeRate = 0
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '图片地址'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("图片地址")
     var imageUrl = ""
 
     @Enumerated(EnumType.STRING)
-    @Column(
-        nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '媒体类型(IMAGE/MUSIC/VIDEO)'"
-    )
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("媒体类型(IMAGE/MUSIC/VIDEO)")
     var mediaType = Type.IMAGE
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '媒体地址'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("媒体地址")
     var mediaUrl = ""
 
-    @Column(nullable = false, columnDefinition = "text COMMENT '描述'")
+    @Column(nullable = false, columnDefinition = "text")
+    @Comment("描述")
     var description = ""
 
-    @Column(nullable = false, columnDefinition = "text COMMENT '信息'")
+    @Column(nullable = false, columnDefinition = "text")
+    @Comment("信息")
     var information = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '认证网络'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("认证网络")
     var blockchainNet = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '认证协议'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("认证协议")
     var blockchainContract = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT '合约地址'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("合约地址")
     var blockchainAddress = ""
 
-    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT '' COMMENT 'IPFS'")
+    @Column(nullable = false, columnDefinition = "varchar(255) DEFAULT ''")
+    @Comment("IPFS")
     var ipfs = ""
 
-    @Column(columnDefinition = "timestamp COMMENT '一级市场开放时间'")
+    @Column(columnDefinition = "timestamp")
+    @Comment("一级市场开放时间")
     var primaryTime = MAX_TIME
 
-    @Column(columnDefinition = "timestamp COMMENT '二级市场开放时间'")
+    @Column(columnDefinition = "timestamp")
+    @Comment("二级市场开放时间")
     var secondaryTime = MAX_TIME
 
-    @Column(columnDefinition = "timestamp COMMENT '开始时间'")
+    @Column(columnDefinition = "timestamp")
+    @Comment("开始时间")
     var startTime: LocalDateTime = MIN_TIME
 
-    @Column(columnDefinition = "timestamp COMMENT '结束时间'")
+    @Column(columnDefinition = "timestamp")
+    @Comment("结束时间")
     var endTime: LocalDateTime = MAX_TIME
 
     override fun toString(): String {
