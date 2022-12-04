@@ -12,7 +12,6 @@ import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.model.vo.converter.BalanceBillVOConv
 import com.rainbow.pangu.repository.BalanceBillRepo
 import com.rainbow.pangu.repository.BalanceRepo
-import com.rainbow.pangu.repository.PaymentOrderRepo
 import com.rainbow.pangu.service.payment.PaymentExecutor
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.LockUtil
@@ -31,9 +30,6 @@ class BalanceService {
 
     @Resource
     lateinit var balanceBillRepo: BalanceBillRepo
-
-    @Resource
-    lateinit var paymentOrderRepo: PaymentOrderRepo
 
     @Resource
     lateinit var paymentExecutors: List<PaymentExecutor>
@@ -174,12 +170,12 @@ class BalanceService {
         }
         if (balanceBill.type == BalanceBill.Type.RECHARGE) {
             // 充值需要校验状态
-            val paymentOrder = paymentOrderRepo.findByOrderNo(balanceBill.billNo).orElseThrow()
+            val paymentOrder = PaymentOrder.findOne(PaymentOrder::orderNo to balanceBill.billNo).orElseThrow()
             val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
             val payStatus = paymentExecutor.queryStatus(paymentOrder.paymentOrderNo)
             if (paymentOrder.status != payStatus) {
                 paymentOrder.status = payStatus
-                paymentOrderRepo.save(paymentOrder)
+                paymentOrder.save()
             }
             // 充值不成功的不参与后续步骤
             if (payStatus != PaymentOrder.Status.SUCCESS) {

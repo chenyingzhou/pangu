@@ -131,8 +131,16 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         return findOne(paramsToSpec(params))
     }
 
+    fun findOne(vararg params: Pair<KProperty1<Entity, Any>, Any>): Optional<Entity> {
+        return findOne(paramsToSpec(params.toMap()))
+    }
+
     fun findAll(params: Map<KProperty1<Entity, Any>, Any>): List<Entity> {
         return findAll(paramsToSpec(params))
+    }
+
+    fun findAll(vararg params: Pair<KProperty1<Entity, Any>, Any>): List<Entity> {
+        return findAll(paramsToSpec(params.toMap()))
     }
 
     fun findAll(params: Map<KProperty1<Entity, Any>, Any>, pageable: Pageable): Page<Entity> {

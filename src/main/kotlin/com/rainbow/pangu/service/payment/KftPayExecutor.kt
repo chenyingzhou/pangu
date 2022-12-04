@@ -11,8 +11,6 @@ import com.rainbow.pangu.entity.*
 import com.rainbow.pangu.model.param.PayParam
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
-import com.rainbow.pangu.repository.PaymentAccountRepo
-import com.rainbow.pangu.repository.PaymentOrderRepo
 import com.rainbow.pangu.util.JacksonUtil
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.PaymentUtil
@@ -31,8 +29,6 @@ class KftPayExecutor : PaymentExecutor {
     private val methodVersion = "1.0.0-PRD"
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val paymentOrderRepo: PaymentOrderRepo by lazy { AppCtxtUtil.getBean(PaymentOrderRepo::class) }
-    val paymentAccountRepo: PaymentAccountRepo by lazy { AppCtxtUtil.getBean(PaymentAccountRepo::class) }
     val kftConfig: KftConfig by lazy { AppCtxtUtil.getBean(KftConfig::class) }
     val signProvider: SignProvider by lazy {
         val keyStorePassword = kftConfig.keyStorePassword.toCharArray()
@@ -51,7 +47,7 @@ class KftPayExecutor : PaymentExecutor {
     override fun apply(payParam: PayParam): PaymentOrderUnverifiedVO {
         // 查找或添加支付账号
         val paymentAccount = if (payParam.paymentAccountId > 0) {
-            paymentAccountRepo.findById(payParam.paymentAccountId).orElseThrow()
+            PaymentAccount.findById(payParam.paymentAccountId).orElseThrow()
         } else {
             PaymentAccount().apply {
                 userId = payParam.userId
@@ -62,7 +58,7 @@ class KftPayExecutor : PaymentExecutor {
                 accountNo = payParam.bankParam!!.accountNo
                 bankCode = "UNKNOWN"
                 bankName = "银行卡"
-                paymentAccountRepo.save(this)
+                this.save()
             }
         }
         if (paymentAccount.userId != payParam.userId) {
@@ -87,7 +83,7 @@ class KftPayExecutor : PaymentExecutor {
             type = PaymentMethod.Type.KFT
             accountId = paymentAccount.id
         }
-        paymentOrderRepo.save(paymentOrder)
+        paymentOrder.save()
         // 开始申请支付
         val bankNo = if (paymentAccount.bankCode != "UNKNOWN" && paymentAccount.bankCode != "") {
             paymentAccount.bankCode
@@ -137,7 +133,7 @@ class KftPayExecutor : PaymentExecutor {
             val paymentBankOpt = PaymentUtil.getBankByTypeAndCode(PaymentMethod.Type.KFT, bankNo)
             paymentAccount.bankCode = bankNo
             paymentAccount.bankName = paymentBankOpt.orElseGet { PaymentBank() }.bankName
-            paymentAccountRepo.save(paymentAccount)
+            paymentAccount.save()
         }
 
         return PaymentOrderUnverifiedVO().apply {
@@ -176,7 +172,7 @@ class KftPayExecutor : PaymentExecutor {
     }
 
     override fun queryStatus(paymentOrderNo: String): PaymentOrder.Status {
-        val paymentOrder = paymentOrderRepo.findByPaymentOrderNo(paymentOrderNo).orElseThrow()
+        val paymentOrder = PaymentOrder.findOne(PaymentOrder::paymentOrderNo to paymentOrderNo).orElseThrow()
         if (paymentOrder.status == PaymentOrder.Status.SUCCESS || paymentOrder.status == PaymentOrder.Status.FAIL) {
             return paymentOrder.status
         }

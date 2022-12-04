@@ -11,7 +11,9 @@ import com.rainbow.pangu.model.vo.OrderItemVO
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.model.vo.converter.OrderItemForMeVOConv
 import com.rainbow.pangu.model.vo.converter.OrderItemVOConv
-import com.rainbow.pangu.repository.*
+import com.rainbow.pangu.repository.GoodsItemRepo
+import com.rainbow.pangu.repository.GoodsRepo
+import com.rainbow.pangu.repository.spec.SpecBuilder
 import com.rainbow.pangu.service.payment.PaymentExecutor
 import com.rainbow.pangu.util.KeyUtil
 import org.springframework.data.domain.PageRequest
@@ -24,12 +26,6 @@ import javax.transaction.Transactional
 @Service
 @Transactional(rollbackOn = [Exception::class])
 class OrderService {
-    @Resource
-    lateinit var orderInfoRepo: OrderInfoRepo
-
-    @Resource
-    lateinit var orderItemRepo: OrderItemRepo
-
     @Resource
     lateinit var goodsRepo: GoodsRepo
 
@@ -44,9 +40,6 @@ class OrderService {
 
     @Resource
     lateinit var paymentExecutors: List<PaymentExecutor>
-
-    @Resource
-    lateinit var paymentOrderRepo: PaymentOrderRepo
 
     /**
      * 根据商品创建订单(一级市场)
@@ -137,9 +130,9 @@ class OrderService {
         orderInfo.amount = totalAmount
         orderInfo.sellerFee = totalSellerFee
         orderInfo.buyerFee = totalBuyerFee
-        orderInfoRepo.save(orderInfo)
+        orderInfo.save()
         orderItems.forEach { it.orderId = orderInfo.id }
-        orderItemRepo.saveAll(orderItems)
+        OrderItem.saveAll(orderItems)
         // 申请支付
         payParam.orderNo = orderInfo.orderNo
         payParam.amount = orderInfo.amount + orderInfo.buyerFee
@@ -163,7 +156,7 @@ class OrderService {
         }
         // 转移资产
         val userId: Int = orderInfo.userId
-        val orderItems = orderItemRepo.findAllByOrderId(orderInfo.id)
+        val orderItems = OrderItem.findAll(OrderItem::orderId to orderInfo.id)
         val sellerId: Int = orderItems[0].sellerId
         val goodsItemIds = orderItems.map { it.goodsItemId }
         val goodsItems = goodsItemRepo.findAllById(goodsItemIds)
@@ -181,9 +174,9 @@ class OrderService {
         val status = if (valid) OrderInfo.Status.SUCCESS else OrderInfo.Status.FAIL
         orderInfo.paid = true
         orderInfo.status = status
-        orderInfoRepo.save(orderInfo)
+        orderInfo.save()
         orderItems.forEach { it.status = status }
-        orderItemRepo.saveAll(orderItems)
+        OrderItem.saveAll(orderItems)
         // 给卖家加钱
         if (valid && sellerId > 0) {
             balanceService.add(BalanceBill.Type.SALE, sellerId, orderInfo.amount - orderInfo.sellerFee)
@@ -199,14 +192,14 @@ class OrderService {
         if (orderInfo.paid) {
             return
         }
-        val orderItems = orderItemRepo.findAllByOrderId(orderInfo.id)
+        val orderItems = OrderItem.findAll(OrderItem::orderId to orderInfo.id)
         val goodsItems = goodsItemRepo.findAllById(orderItems.map { it.goodsItemId })
         goodsItems.forEach { it.locked = false }
         goodsItemRepo.saveAll(goodsItems)
         orderInfo.status = OrderInfo.Status.FAIL
-        orderInfoRepo.save(orderInfo)
+        orderInfo.save()
         orderItems.forEach { it.status = OrderInfo.Status.FAIL }
-        orderItemRepo.saveAll(orderItems)
+        OrderItem.saveAll(orderItems)
         // 从未售出的藏品，加入到未售出资产集合
         for (goodsItem in goodsItems) {
             if (goodsItem.userId == 0) {
@@ -222,13 +215,13 @@ class OrderService {
         if (orderInfo.status != OrderInfo.Status.INIT) {
             return
         }
-        val paymentOrder = paymentOrderRepo.findByOrderNo(orderInfo.orderNo).orElseThrow()
+        val paymentOrder = PaymentOrder.findOne(PaymentOrder::orderNo to orderInfo.orderNo).orElseThrow()
         val paymentExecutor = paymentExecutors.find { it.type == paymentOrder.type }!!
         val payStatus = paymentExecutor.queryStatus(paymentOrder.paymentOrderNo)
         paymentOrder.let {
             if (paymentOrder.status != payStatus) {
                 paymentOrder.status = payStatus
-                paymentOrderRepo.save(paymentOrder)
+                paymentOrder.save()
             }
         }
         if (payStatus == PaymentOrder.Status.SUCCESS) {
@@ -245,13 +238,20 @@ class OrderService {
 
     fun itemList(goodsId: Int, page: Int): List<OrderItemVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
-        val items = orderItemRepo.findAllByGoodsIdAndStatusIn(goodsId, listOf(OrderInfo.Status.SUCCESS), pageable)
+        val items = OrderItem.findAll(
+            mapOf(OrderItem::goodsId to goodsId, OrderItem::status to OrderInfo.Status.SUCCESS), pageable
+        )
         return OrderItemVOConv.fromEntity(items)
     }
 
     fun itemListForMe(userId: Int, page: Int): List<OrderItemForMeVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(OrderItem::updatedTime.name).descending())
-        val items = orderItemRepo.findAllByUserAndStatusIn(userId, listOf(OrderInfo.Status.SUCCESS), pageable)
+        // status = 'SUCCESS' and (userId = $userId or o.sellerId = $userId)
+        val specBuilder = SpecBuilder<OrderItem>().eq(OrderItem::status, OrderInfo.Status.SUCCESS).or(
+            SpecBuilder<OrderItem>().eq(OrderItem::userId, userId),
+            SpecBuilder<OrderItem>().eq(OrderItem::sellerId, userId),
+        )
+        val items = OrderItem.findAll(specBuilder.build(), pageable)
         return OrderItemForMeVOConv.fromEntity(items)
     }
 }
