@@ -6,6 +6,7 @@ import org.hibernate.Hibernate
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
 import javax.persistence.*
 import kotlin.reflect.KClass
 
@@ -77,8 +78,13 @@ abstract class BaseEntity {
         EntityHolder.deleteCache(this::class, listOf(this.id))
     }
 
+    @PersistenceContext
+    fun setEntityManager(entityManager: EntityManager) {
+        repos[this::class] = SimpleJpaRepository(this::class.java, entityManager)
+    }
+
     companion object {
-        private val repos = HashMap<KClass<*>, JpaRepository<*, Int>>()
+        val repos = ConcurrentHashMap<KClass<*>, JpaRepository<*, Int>>()
         fun <Entity : Any> repo(entityClass: KClass<Entity>): JpaRepository<Entity, Int> {
             if (!repos.containsKey(entityClass)) {
                 synchronized(repos) {
@@ -88,7 +94,9 @@ abstract class BaseEntity {
                     }
                 }
             }
-            return repos[entityClass] as JpaRepository<Entity, Int>
+            val repo = repos[entityClass]
+                ?: throw IllegalStateException("Did you forget to annotate ${entityClass.simpleName} with @ActiveRecord?")
+            return repo as JpaRepository<Entity, Int>
         }
     }
 }
