@@ -14,7 +14,7 @@ import javax.persistence.*
 @javax.persistence.Table(
     name = "user_password",
     indexes = [
-        Index(name = "idx_type_user_id", columnList = "type,userId", unique = true),
+        Index(name = "idx_user_id", columnList = "userId"),
     ],
 )
 class UserPassword : ActiveRecordEntity() {

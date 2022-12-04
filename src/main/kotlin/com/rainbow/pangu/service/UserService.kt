@@ -14,24 +14,15 @@ import com.rainbow.pangu.model.vo.UserAddressVO
 import com.rainbow.pangu.model.vo.UserVO
 import com.rainbow.pangu.model.vo.converter.UserAddressVOConv
 import com.rainbow.pangu.model.vo.converter.UserVOConv
-import com.rainbow.pangu.repository.UserAddressRepo
-import com.rainbow.pangu.repository.UserPasswordRepo
 import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.RedisUtil
 import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
-import javax.annotation.Resource
 import javax.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])
 class UserService {
-    @Resource
-    lateinit var userPasswordRepo: UserPasswordRepo
-
-    @Resource
-    lateinit var userAddressRepo: UserAddressRepo
-
     /**
      * 发送验证码，返回发送手机号(脱敏处理)
      */
@@ -85,7 +76,8 @@ class UserService {
         if (password.isNotBlank()) {
             user = User.findOne(mapOf(User::phoneNo to phoneNo)).orElse(null)
             val userPassword = user?.let {
-                userPasswordRepo.findByTypeAndUserId(UserPassword.Type.LOGIN, user!!.id).orElse(null)
+                val passwords = UserPassword.findAll(mapOf(UserPassword::userId to user!!.id))
+                passwords.find { it.type == UserPassword.Type.LOGIN }
             }
             if (userPassword == null || userPassword.password != password) {
                 throw BizException("账号或密码不正确")
@@ -108,10 +100,11 @@ class UserService {
         }
         // 若选择重置密码，则清除密码
         if (resetPassword) {
-            val userPassword = userPasswordRepo.findByTypeAndUserId(UserPassword.Type.LOGIN, user.id).orElse(null)
-            if (userPassword != null) {
-                userPassword.password = ""
-                userPasswordRepo.save(userPassword)
+            UserPassword.findAll(mapOf(UserPassword::userId to user.id)).forEach {
+                if (it.type == UserPassword.Type.LOGIN) {
+                    it.password = ""
+                    it.save()
+                }
             }
         }
         // 生成TOKEN
@@ -151,8 +144,11 @@ class UserService {
      * 检查用户是否设置了密码
      */
     fun hasPassword(userId: Int, type: UserPassword.Type): Boolean {
-        val userPasswordOpt = userPasswordRepo.findByTypeAndUserId(type, userId)
-        return userPasswordOpt.isPresent && userPasswordOpt.get().password.isNotBlank()
+        var hasPassword = false
+        UserPassword.findAll(mapOf(UserPassword::userId to userId)).forEach {
+            hasPassword = hasPassword || (it.type == type && it.password.isNotBlank())
+        }
+        return hasPassword
     }
 
     /**
@@ -165,7 +161,8 @@ class UserService {
         val oldPassword = changePasswordParam.oldPassword
         val newPassword = changePasswordParam.newPassword
 
-        val userPassword = userPasswordRepo.findByTypeAndUserId(type, userId).orElse(UserPassword())
+        val userPasswords = UserPassword.findAll(mapOf(UserPassword::userId to userId))
+        val userPassword = userPasswords.find { it.type == type } ?: UserPassword()
         // 若原来设置过密码，则需要验证
         if (userPassword.id != 0 && userPassword.password.isNotBlank()) {
             if (oldPassword.isNotBlank()) {
@@ -188,8 +185,8 @@ class UserService {
             it.type = UserPassword.Type.LOGIN
             it.userId = userId
             it.password = newPassword
+            it.save()
         }
-        userPasswordRepo.save(userPassword)
         return true
     }
 
@@ -230,19 +227,20 @@ class UserService {
     }
 
     fun getAddress(userId: Int): UserAddressVO {
-        val userAddress = userAddressRepo.findByUserId(userId).orElseGet { UserAddress() }
+        val userAddress = UserAddress.findOne(mapOf(UserAddress::userId to userId)).orElseGet { UserAddress() }
         return UserAddressVOConv.fromEntity(userAddress)
     }
 
     fun setAddress(userAddressParam: UserAddressParam): Boolean {
-        val userAddress = userAddressRepo.findByUserId(userAddressParam.userId).orElseGet { UserAddress() }
-        userAddress.let {
-            it.userId = userAddressParam.userId
-            it.name = userAddressParam.name
-            it.phoneNo = userAddressParam.phoneNo
-            it.address = userAddressParam.address
+        val userAddressOpt = UserAddress.findOne(mapOf(UserAddress::userId to userAddressParam.userId))
+        if (userAddressOpt.isPresent) {
+            val userPassword = userAddressOpt.get()
+            userPassword.userId = userAddressParam.userId
+            userPassword.name = userAddressParam.name
+            userPassword.phoneNo = userAddressParam.phoneNo
+            userPassword.address = userAddressParam.address
+            userPassword.save()
         }
-        userAddressRepo.save(userAddress)
         return true
     }
 }
