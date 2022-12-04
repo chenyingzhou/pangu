@@ -9,7 +9,6 @@ import com.rainbow.pangu.model.vo.PaymentMethodVO
 import com.rainbow.pangu.model.vo.converter.PaymentAccountVOConv
 import com.rainbow.pangu.model.vo.converter.PaymentBankVOConv
 import com.rainbow.pangu.model.vo.converter.PaymentMethodVOConv
-import com.rainbow.pangu.repository.*
 import com.rainbow.pangu.service.payment.PaymentExecutor
 import com.rainbow.pangu.util.AppCtxtUtil
 import com.rainbow.pangu.util.PaymentUtil
@@ -79,9 +78,8 @@ class PayService {
                 orderService.paid(orderInfoOpt.get())
             }
             // 更新充值状态(耦合)
-            val balanceBillRepo = AppCtxtUtil.getBean(BalanceBillRepo::class)
             val balanceService = AppCtxtUtil.getBean(BalanceService::class)
-            val balanceBillOpt = balanceBillRepo.findByBillNo(paymentOrder.orderNo)
+            val balanceBillOpt = BalanceBill.findOne(BalanceBill::billNo to paymentOrder.orderNo)
             if (balanceBillOpt.isPresent) {
                 balanceService.check(balanceBillOpt.get())
             }

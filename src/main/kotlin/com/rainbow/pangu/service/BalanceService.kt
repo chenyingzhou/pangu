@@ -10,8 +10,6 @@ import com.rainbow.pangu.model.param.PayParam
 import com.rainbow.pangu.model.vo.BalanceBillVO
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.model.vo.converter.BalanceBillVOConv
-import com.rainbow.pangu.repository.BalanceBillRepo
-import com.rainbow.pangu.repository.BalanceRepo
 import com.rainbow.pangu.service.payment.PaymentExecutor
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.LockUtil
@@ -26,12 +24,6 @@ import kotlin.math.absoluteValue
 @Transactional(rollbackOn = [Exception::class])
 class BalanceService {
     @Resource
-    lateinit var balanceRepo: BalanceRepo
-
-    @Resource
-    lateinit var balanceBillRepo: BalanceBillRepo
-
-    @Resource
     lateinit var paymentExecutors: List<PaymentExecutor>
 
     /**
@@ -41,7 +33,7 @@ class BalanceService {
         if (userId == 0) {
             return Balance()
         }
-        val balance = balanceRepo.findByUserId(userId).orElseGet { Balance() }
+        val balance = Balance.findOne(Balance::userId to userId).orElseGet { Balance() }
         // 创建余额
         if (balance.id == 0) {
             val lockKey = KeyTemplate.LOCK_BALANCE.fill(userId)
@@ -50,7 +42,7 @@ class BalanceService {
             }
             try {
                 balance.userId = userId
-                balanceRepo.save(balance)
+                balance.save()
             } finally {
                 LockUtil.unlock(lockKey)
             }
@@ -70,7 +62,7 @@ class BalanceService {
      */
     fun bill(userId: Int, page: Int): List<BalanceBillVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(BalanceBill::createdTime.name).descending())
-        val balanceBillPage = balanceBillRepo.findAllByUserId(userId, pageable)
+        val balanceBillPage = BalanceBill.findAll(mapOf(BalanceBill::userId to userId), pageable)
         return balanceBillPage.map { BalanceBillVOConv.fromEntity(it) }.toList()
     }
 
@@ -108,7 +100,7 @@ class BalanceService {
 
         if (addTypes.contains(type)) {
             // 增加时，直接保存为INIT状态，异步处理
-            balanceBillRepo.save(balanceBill)
+            balanceBill.save()
         } else {
             balanceBill.before = balance.amount
             balanceBill.after = balance.amount + amount
@@ -116,9 +108,9 @@ class BalanceService {
             if (type == BalanceBill.Type.PAY || type == BalanceBill.Type.SUBTRACT) {
                 balanceBill.status = BalanceBill.Status.SUCCESS
             }
-            balanceBillRepo.save(balanceBill)
+            balanceBill.save()
             balance.amount = balance.amount + amount
-            balanceRepo.save(balance)
+            balance.save()
         }
         return balanceBill
     }
@@ -136,7 +128,7 @@ class BalanceService {
         // 如果支付状态为成功(若存在这种可能性)，直接确认充值状态
         if (paymentOrderUnverifiedVO.status == PaymentOrder.Status.SUCCESS) {
             balanceBill.status = BalanceBill.Status.SUCCESS
-            balanceBillRepo.save(balanceBill)
+            balanceBill.save()
         }
         return paymentOrderUnverifiedVO
     }
@@ -181,7 +173,7 @@ class BalanceService {
             if (payStatus != PaymentOrder.Status.SUCCESS) {
                 if (payStatus == PaymentOrder.Status.FAIL) {
                     balanceBill.status = BalanceBill.Status.FAIL
-                    balanceBillRepo.save(balanceBill)
+                    balanceBill.save()
                 }
                 return
             }
@@ -191,9 +183,9 @@ class BalanceService {
             it.status = BalanceBill.Status.SUCCESS
             it.before = balance.amount
             it.after = balance.amount + it.amount
-            balanceBillRepo.save(balanceBill)
+            it.save()
         }
         balance.amount = balance.amount + balanceBill.amount
-        balanceRepo.save(balance)
+        balance.save()
     }
 }
