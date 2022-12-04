@@ -1,7 +1,7 @@
 package com.rainbow.pangu.entity
 
 import com.rainbow.pangu.enhance.threadholder.EntityHolder
-import com.rainbow.pangu.repository.spec.SpecBuilder
+import com.rainbow.pangu.entity.spec.SpecBuilder
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort

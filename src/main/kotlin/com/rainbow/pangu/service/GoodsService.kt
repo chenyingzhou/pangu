@@ -9,42 +9,33 @@ import com.rainbow.pangu.model.vo.GoodsOwnVO
 import com.rainbow.pangu.model.vo.GoodsVO
 import com.rainbow.pangu.model.vo.converter.GoodsItemVOConv
 import com.rainbow.pangu.model.vo.converter.GoodsVOConv
-import com.rainbow.pangu.repository.GoodsItemRepo
-import com.rainbow.pangu.repository.GoodsRepo
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import javax.annotation.Resource
 import javax.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])
 class GoodsService {
-    @Resource
-    lateinit var goodsRepo: GoodsRepo
-
-    @Resource
-    lateinit var goodsItemRepo: GoodsItemRepo
-
     fun goodsList(page: Int): List<GoodsVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(Goods::createdTime.name).descending())
-        val goodsPage = goodsRepo.findAll(pageable)
+        val goodsPage = Goods.findAll(pageable)
         return GoodsVOConv.fromEntity(goodsPage)
     }
 
     fun goodsDetail(goodsId: Int): GoodsVO {
-        val goods = goodsRepo.findById(goodsId).orElseThrow()
+        val goods = Goods.findById(goodsId).orElseThrow()
         return GoodsVOConv.fromEntity(goods)
     }
 
     fun onSaleItemList(goodsId: Int, page: Int): List<GoodsItemVO> {
         val pageable = PageRequest.of(page - 1, 20, Sort.by(GoodsItem::price.name, GoodsItem::id.name).ascending())
-        val goodsItemPage = goodsItemRepo.findAllByGoodsIdAndOnSaleIn(goodsId, listOf(true), pageable)
+        val goodsItemPage = GoodsItem.findAll(mapOf(GoodsItem::goodsId to goodsId, GoodsItem::onSale to true), pageable)
         return GoodsItemVOConv.fromEntity(goodsItemPage)
     }
 
     fun goodsOwnList(userId: Int): List<GoodsOwnVO> {
-        var goodsItems = goodsItemRepo.findAllByUserId(userId)
+        var goodsItems = GoodsItem.findAll(GoodsItem::userId to userId)
         goodsItems = goodsItems.sortedByDescending { it.updatedTime }
         val goodsIds: MutableList<Int> = ArrayList()
         val goodsIdCountMap: MutableMap<Int, Int> = HashMap()
@@ -55,7 +46,7 @@ class GoodsService {
                 goodsIds.add(goodsId)
             }
         }
-        val goodsList = goodsRepo.findAllById(goodsIds)
+        val goodsList = Goods.findAllById(goodsIds)
         val goodsVOList = GoodsVOConv.fromEntity(goodsList)
         val goodsOwnVOList = goodsVOList.map {
             GoodsOwnVO().apply {
@@ -67,12 +58,12 @@ class GoodsService {
     }
 
     fun goodsItemOwnList(userId: Int, goodsId: Int): List<GoodsItemVO> {
-        val goodsItems = goodsItemRepo.findAllByUserId(userId).filter { it.goodsId == goodsId }
+        val goodsItems = GoodsItem.findAll(GoodsItem::userId to userId).filter { it.goodsId == goodsId }
         return GoodsItemVOConv.fromEntity(goodsItems)
     }
 
     fun saleGoodsItem(saleGoodsItemParam: SaleGoodsItemParam): Boolean {
-        val goodsItem = goodsItemRepo.findById(saleGoodsItemParam.goodsItemId).orElseThrow()
+        val goodsItem = GoodsItem.findById(saleGoodsItemParam.goodsItemId).orElseThrow()
         if (goodsItem.userId != saleGoodsItemParam.userId) {
             throw BizException("不能操作他人资产")
         }
@@ -81,7 +72,7 @@ class GoodsService {
         }
         goodsItem.onSale = saleGoodsItemParam.sale
         if (goodsItem.onSale) goodsItem.price = saleGoodsItemParam.price
-        goodsItemRepo.save(goodsItem)
+        goodsItem.save()
         return true
     }
 }

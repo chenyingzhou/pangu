@@ -1,9 +1,6 @@
 package com.rainbow.pangu.service
 
-import com.rainbow.pangu.entity.BalanceBill
-import com.rainbow.pangu.entity.OrderInfo
-import com.rainbow.pangu.entity.OrderItem
-import com.rainbow.pangu.entity.PaymentOrder
+import com.rainbow.pangu.entity.*
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.model.param.PayParam
 import com.rainbow.pangu.model.vo.OrderItemForMeVO
@@ -11,9 +8,7 @@ import com.rainbow.pangu.model.vo.OrderItemVO
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.model.vo.converter.OrderItemForMeVOConv
 import com.rainbow.pangu.model.vo.converter.OrderItemVOConv
-import com.rainbow.pangu.repository.GoodsItemRepo
-import com.rainbow.pangu.repository.GoodsRepo
-import com.rainbow.pangu.repository.spec.SpecBuilder
+import com.rainbow.pangu.entity.spec.SpecBuilder
 import com.rainbow.pangu.service.payment.PaymentExecutor
 import com.rainbow.pangu.util.KeyUtil
 import org.springframework.data.domain.PageRequest
@@ -26,12 +21,6 @@ import javax.transaction.Transactional
 @Service
 @Transactional(rollbackOn = [Exception::class])
 class OrderService {
-    @Resource
-    lateinit var goodsRepo: GoodsRepo
-
-    @Resource
-    lateinit var goodsItemRepo: GoodsItemRepo
-
     @Resource
     lateinit var balanceService: BalanceService
 
@@ -49,7 +38,7 @@ class OrderService {
             throw BizException("一次最多购买10份")
         }
         val now = LocalDateTime.now()
-        val goods = goodsRepo.findById(goodsId).orElseThrow()
+        val goods = Goods.findById(goodsId).orElseThrow()
         if (now < goods.primaryTime || now >= goods.secondaryTime) {
             throw BizException("不在购买时间内")
         }
@@ -69,8 +58,8 @@ class OrderService {
      * 根据资产创建订单(二级市场)
      */
     fun createByGoodsItemId(goodsItemId: Int, payParam: PayParam): PaymentOrderUnverifiedVO {
-        val goodsItem = goodsItemRepo.findById(goodsItemId).orElseThrow()
-        val goods = goodsRepo.findById(goodsItem.goodsId).orElseThrow()
+        val goodsItem = GoodsItem.findById(goodsItemId).orElseThrow()
+        val goods = Goods.findById(goodsItem.goodsId).orElseThrow()
         if (LocalDateTime.now() < goods.secondaryTime) {
             throw BizException("该商品尚未开启二级市场")
         }
@@ -82,11 +71,11 @@ class OrderService {
      */
     private fun create(goodsItemIds: List<Int>, payParam: PayParam): PaymentOrderUnverifiedVO {
         val userId = payParam.userId
-        val goodsItems = goodsItemRepo.findAllById(goodsItemIds)
+        val goodsItems = GoodsItem.findAllById(goodsItemIds)
         if (goodsItems.isEmpty()) {
             throw BizException("该资产不存在")
         }
-        val goods = goodsRepo.findById(goodsItems[0].goodsId).orElseThrow { BizException("该资产不可售") }
+        val goods = Goods.findById(goodsItems[0].goodsId).orElseThrow { BizException("该资产不可售") }
         // 锁定资产
         goodsItems.forEach {
             if (it.userId == userId) {
@@ -96,7 +85,7 @@ class OrderService {
                 throw BizException("该资产已被其他人买走")
             }
             it.locked = true
-            goodsItemRepo.save(it)
+            it.save()
         }
         // 创建订单
         val orderInfo = OrderInfo()
@@ -159,7 +148,7 @@ class OrderService {
         val orderItems = OrderItem.findAll(OrderItem::orderId to orderInfo.id)
         val sellerId: Int = orderItems[0].sellerId
         val goodsItemIds = orderItems.map { it.goodsItemId }
-        val goodsItems = goodsItemRepo.findAllById(goodsItemIds)
+        val goodsItems = GoodsItem.findAllById(goodsItemIds)
         // 检查资产是否还在原卖家名下，在：达成交易 不在：交易未达成，后续将退款
         var valid = true
         goodsItems.forEach { valid = valid && it.userId == sellerId }
@@ -168,7 +157,7 @@ class OrderService {
                 it.userId = userId
                 it.onSale = false
                 it.locked = false
-                goodsItemRepo.save(it)
+                it.save()
             }
         }
         val status = if (valid) OrderInfo.Status.SUCCESS else OrderInfo.Status.FAIL
@@ -193,9 +182,9 @@ class OrderService {
             return
         }
         val orderItems = OrderItem.findAll(OrderItem::orderId to orderInfo.id)
-        val goodsItems = goodsItemRepo.findAllById(orderItems.map { it.goodsItemId })
+        val goodsItems = GoodsItem.findAllById(orderItems.map { it.goodsItemId })
         goodsItems.forEach { it.locked = false }
-        goodsItemRepo.saveAll(goodsItems)
+        GoodsItem.saveAll(goodsItems)
         orderInfo.status = OrderInfo.Status.FAIL
         orderInfo.save()
         orderItems.forEach { it.status = OrderInfo.Status.FAIL }

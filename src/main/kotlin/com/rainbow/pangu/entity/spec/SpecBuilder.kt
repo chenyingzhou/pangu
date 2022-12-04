@@ -1,4 +1,4 @@
-package com.rainbow.pangu.repository.spec
+package com.rainbow.pangu.entity.spec
 
 import com.rainbow.pangu.entity.ActiveRecordEntity
 import org.springframework.data.jpa.domain.Specification

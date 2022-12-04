@@ -4,20 +4,15 @@ import com.rainbow.pangu.entity.Goods
 import com.rainbow.pangu.entity.Message
 import com.rainbow.pangu.entity.User
 import com.rainbow.pangu.model.vo.MessageVO
-import com.rainbow.pangu.repository.BaseRepo
-import com.rainbow.pangu.repository.GoodsRepo
 
 object MessageVOConv : Converter<Message, MessageVO> {
-    private val goodsRepo: GoodsRepo
-        get() = BaseRepo.instance(GoodsRepo::class)
-
     override fun fromEntity(s: Message): MessageVO {
         val vo = MessageVO()
         vo.type = s.type
         vo.content = s.content
         vo.watched = s.watched
         if (s.senderId > 0) vo.sender = UserShortVOConv.fromEntity(User.findById(s.senderId).orElseGet { User() })
-        if (s.goodsId > 0) vo.goods = GoodsVOConv.fromEntity(goodsRepo.findById(s.goodsId).orElseGet { Goods() })
+        if (s.goodsId > 0) vo.goods = GoodsVOConv.fromEntity(Goods.findById(s.goodsId).orElseGet { Goods() })
         return vo
     }
 
@@ -25,7 +20,7 @@ object MessageVOConv : Converter<Message, MessageVO> {
         val goodsIds = ss.map { it.goodsId }.filter { it > 0 }
         var userIds = ss.map { it.senderId }.filter { it > 0 }
         if (goodsIds.isNotEmpty()) {
-            val goodsList = goodsRepo.findAllById(goodsIds)
+            val goodsList = Goods.findAllById(goodsIds)
             userIds = userIds + goodsList.map { it.creatorId }
         }
         if (userIds.isNotEmpty()) User.findAllById(userIds)
