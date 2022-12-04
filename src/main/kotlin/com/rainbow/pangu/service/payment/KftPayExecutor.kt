@@ -7,16 +7,12 @@ import com.lycheepay.gateway.client.dto.initiativepay.*
 import com.lycheepay.gateway.client.security.KeystoreSignProvider
 import com.lycheepay.gateway.client.security.SignProvider
 import com.rainbow.pangu.config.KftConfig
+import com.rainbow.pangu.entity.*
 import com.rainbow.pangu.model.param.PayParam
-import com.rainbow.pangu.entity.PaymentAccount
-import com.rainbow.pangu.entity.PaymentBank
-import com.rainbow.pangu.entity.PaymentMethod
-import com.rainbow.pangu.entity.PaymentOrder
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.repository.PaymentAccountRepo
 import com.rainbow.pangu.repository.PaymentOrderRepo
-import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.JacksonUtil
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.PaymentUtil
@@ -35,7 +31,6 @@ class KftPayExecutor : PaymentExecutor {
     private val methodVersion = "1.0.0-PRD"
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val userRepo: UserRepo by lazy { AppCtxtUtil.getBean(UserRepo::class) }
     val paymentOrderRepo: PaymentOrderRepo by lazy { AppCtxtUtil.getBean(PaymentOrderRepo::class) }
     val paymentAccountRepo: PaymentAccountRepo by lazy { AppCtxtUtil.getBean(PaymentAccountRepo::class) }
     val kftConfig: KftConfig by lazy { AppCtxtUtil.getBean(KftConfig::class) }
@@ -75,7 +70,7 @@ class KftPayExecutor : PaymentExecutor {
         }
         // 新增银行卡时，校验银行卡是否与实名信息匹配
         if (!paymentAccount.paid) {
-            val user = userRepo.findById(payParam.userId).orElseThrow()
+            val user = User.findById(payParam.userId).orElseThrow()
             if (user.realNameChecked) {
                 if (user.idCardNo != paymentAccount.idCardNo || user.realName != paymentAccount.accountName) {
                     val realName = "*".repeat(user.realName.length - 1) + user.realName.last()

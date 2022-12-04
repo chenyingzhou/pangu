@@ -16,7 +16,6 @@ import com.rainbow.pangu.model.vo.converter.UserAddressVOConv
 import com.rainbow.pangu.model.vo.converter.UserVOConv
 import com.rainbow.pangu.repository.UserAddressRepo
 import com.rainbow.pangu.repository.UserPasswordRepo
-import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.RedisUtil
 import org.springframework.stereotype.Service
@@ -27,9 +26,6 @@ import javax.transaction.Transactional
 @Service
 @Transactional(rollbackOn = [Exception::class])
 class UserService {
-    @Resource
-    lateinit var userRepo: UserRepo
-
     @Resource
     lateinit var userPasswordRepo: UserPasswordRepo
 
@@ -43,7 +39,7 @@ class UserService {
         var realPhoneNo = phoneNo
         // 若用户ID存在，则使用用户绑定的手机号
         if (userId > 0) {
-            realPhoneNo = userRepo.findById(userId).orElseThrow().phoneNo
+            realPhoneNo = User.findById(userId).orElseThrow().phoneNo
         }
         if (!realPhoneNo.matches("^1\\d{10}$".toRegex())) {
             throw BizException("请输入正确的手机号")
@@ -87,7 +83,7 @@ class UserService {
         }
         // 使用密码
         if (password.isNotBlank()) {
-            user = userRepo.findByPhoneNo(phoneNo).orElse(null)
+            user = User.findOne(mapOf(User::phoneNo to phoneNo)).orElse(null)
             val userPassword = user?.let {
                 userPasswordRepo.findByTypeAndUserId(UserPassword.Type.LOGIN, user!!.id).orElse(null)
             }
@@ -98,7 +94,7 @@ class UserService {
 
         // 使用验证码登录时，尚未查询用户，查询之
         if (user == null) {
-            user = userRepo.findByPhoneNo(phoneNo).orElse(null)
+            user = User.findOne(mapOf(User::phoneNo to phoneNo)).orElse(null)
         }
         // 使用验证码时，该手机号尚未注册，执行注册
         if (user == null) {
@@ -108,7 +104,7 @@ class UserService {
                 this.avatar = "/faces/default.png"
                 this.signature = "还未从婴儿车掉落的baby"
             }
-            userRepo.save(user)
+            user.save()
         }
         // 若选择重置密码，则清除密码
         if (resetPassword) {
@@ -132,7 +128,7 @@ class UserService {
      * 获取用户信息
      */
     fun info(userId: Int): UserVO {
-        val user = userRepo.findById(userId).orElseGet { User() }
+        val user = User.findById(userId).orElseGet { User() }
         return UserVOConv.fromEntity(user)
     }
 
@@ -140,14 +136,14 @@ class UserService {
      * 编辑用户信息
      */
     fun edit(editUserParam: EditUserParam): Boolean {
-        val user = userRepo.findById(editUserParam.userId).orElseThrow()
+        val user = User.findById(editUserParam.userId).orElseThrow()
         user.let {
             it.nickName = editUserParam.nickName.ifBlank { it.nickName }
             it.avatar = editUserParam.avatar.ifBlank { it.avatar }
             it.signature = editUserParam.signature.ifBlank { it.signature }
             it.description = editUserParam.description.ifBlank { it.description }
         }
-        userRepo.save(user)
+        user.save()
         return true
     }
 
@@ -179,7 +175,7 @@ class UserService {
                 }
             } else {
                 // 使用短信验证
-                val user = userRepo.findById(userId).orElseThrow()
+                val user = User.findById(userId).orElseThrow()
                 val smsCodeKey = KeyTemplate.SMS_CODE.fill(user.phoneNo)
                 val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
                 if (code != sentCode) {
@@ -201,7 +197,7 @@ class UserService {
      * 实名认证，仅校验身份证的校验码
      */
     fun realName(userId: Int, realName: String, idCardNo: String): Boolean {
-        val user = userRepo.findById(userId).orElseThrow()
+        val user = User.findById(userId).orElseThrow()
         if (user.realNameChecked) {
             throw BizException("不需要重复认证")
         }
@@ -215,7 +211,7 @@ class UserService {
             it.realName = realName
             it.idCardNo = idCardNo
         }
-        userRepo.save(user)
+        user.save()
         return true
     }
 

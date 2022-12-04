@@ -1,6 +1,11 @@
 package com.rainbow.pangu.entity
 
 import com.rainbow.pangu.enhance.threadholder.EntityHolder
+import com.rainbow.pangu.repository.spec.SpecBuilder
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import java.util.*
@@ -8,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.persistence.EntityManager
 import javax.persistence.PersistenceContext
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
     companion object {
@@ -105,5 +111,71 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         val repo = repo(entityClass)
         repo.deleteAll(entities)
         EntityHolder.deleteCache(entityClass, entities.map { it.id })
+    }
+
+    // 以下查询不使用缓存
+
+    private fun paramsToSpec(map: Map<KProperty1<Entity, Any>, Any>): Specification<Entity> {
+        val spec = SpecBuilder<Entity>()
+        for ((property, value) in map) {
+            if (value is Collection<*>) {
+                spec.`in`(property, value)
+            } else {
+                spec.eq(property, value)
+            }
+        }
+        return spec.build()
+    }
+
+    fun findOne(params: Map<KProperty1<Entity, Any>, Any>): Optional<Entity> {
+        return findOne(paramsToSpec(params))
+    }
+
+    fun findAll(params: Map<KProperty1<Entity, Any>, Any>): List<Entity> {
+        return findAll(paramsToSpec(params))
+    }
+
+    fun findAll(params: Map<KProperty1<Entity, Any>, Any>, pageable: Pageable): Page<Entity> {
+        return findAll(paramsToSpec(params), pageable)
+    }
+
+    fun findAll(params: Map<KProperty1<Entity, Any>, Any>, sort: Sort): List<Entity> {
+        return findAll(paramsToSpec(params), sort)
+    }
+
+    fun findOne(spec: Specification<Entity>): Optional<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findOne(spec)
+    }
+
+    fun findAll(sort: Sort): List<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findAll(sort)
+    }
+
+    fun findAll(pageable: Pageable): Page<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findAll(pageable)
+    }
+
+    fun findAll(spec: Specification<Entity>): List<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findAll(spec)
+    }
+
+    fun findAll(spec: Specification<Entity>, pageable: Pageable): Page<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findAll(spec, pageable)
+    }
+
+    fun findAll(spec: Specification<Entity>, sort: Sort): List<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass) as SimpleJpaRepository
+        return repo.findAll(spec, sort)
     }
 }

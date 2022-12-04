@@ -2,15 +2,13 @@ package com.rainbow.pangu.model.vo.converter
 
 import com.rainbow.pangu.enhance.threadholder.ClientInfoHolder
 import com.rainbow.pangu.entity.OrderItem
+import com.rainbow.pangu.entity.User
 import com.rainbow.pangu.model.vo.OrderItemForMeVO
 import com.rainbow.pangu.repository.BaseRepo
 import com.rainbow.pangu.repository.GoodsRepo
-import com.rainbow.pangu.repository.UserRepo
 import com.rainbow.pangu.util.DateTimeUtil
 
 object OrderItemForMeVOConv : Converter<OrderItem, OrderItemForMeVO> {
-    private val userRepo: UserRepo
-        get() = BaseRepo.instance(UserRepo::class)
     private val goodsRepo: GoodsRepo
         get() = BaseRepo.instance(GoodsRepo::class)
 
@@ -30,6 +28,6 @@ object OrderItemForMeVOConv : Converter<OrderItem, OrderItemForMeVO> {
         val goodsIds = ss.map { it.goodsId }
         val goodsList = goodsRepo.findAllById(goodsIds)
         val creatorIds = goodsList.map { it.creatorId }
-        userRepo.findAllById(creatorIds)
+        User.findAllById(creatorIds)
     }
 }

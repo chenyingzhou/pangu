@@ -6,11 +6,8 @@ import com.rainbow.pangu.entity.User
 import com.rainbow.pangu.model.vo.MessageVO
 import com.rainbow.pangu.repository.BaseRepo
 import com.rainbow.pangu.repository.GoodsRepo
-import com.rainbow.pangu.repository.UserRepo
 
 object MessageVOConv : Converter<Message, MessageVO> {
-    private val userRepo: UserRepo
-        get() = BaseRepo.instance(UserRepo::class)
     private val goodsRepo: GoodsRepo
         get() = BaseRepo.instance(GoodsRepo::class)
 
@@ -19,7 +16,7 @@ object MessageVOConv : Converter<Message, MessageVO> {
         vo.type = s.type
         vo.content = s.content
         vo.watched = s.watched
-        if (s.senderId > 0) vo.sender = UserShortVOConv.fromEntity(userRepo.findById(s.senderId).orElseGet { User() })
+        if (s.senderId > 0) vo.sender = UserShortVOConv.fromEntity(User.findById(s.senderId).orElseGet { User() })
         if (s.goodsId > 0) vo.goods = GoodsVOConv.fromEntity(goodsRepo.findById(s.goodsId).orElseGet { Goods() })
         return vo
     }
@@ -31,6 +28,6 @@ object MessageVOConv : Converter<Message, MessageVO> {
             val goodsList = goodsRepo.findAllById(goodsIds)
             userIds = userIds + goodsList.map { it.creatorId }
         }
-        if (userIds.isNotEmpty()) userRepo.findAllById(userIds)
+        if (userIds.isNotEmpty()) User.findAllById(userIds)
     }
 }

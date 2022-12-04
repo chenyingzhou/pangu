@@ -4,6 +4,7 @@ import com.rainbow.pangu.constant.Platform
 import com.rainbow.pangu.entity.PaymentAccount
 import com.rainbow.pangu.entity.PaymentMethod
 import com.rainbow.pangu.entity.PaymentOrder
+import com.rainbow.pangu.entity.User
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.model.vo.PaymentAccountVO
 import com.rainbow.pangu.model.vo.PaymentBankVO
@@ -70,13 +71,12 @@ class PayService {
                     paymentAccount.paid = true
                     paymentAccountRepo.save(paymentAccount)
                     // 更新用户实名信息(耦合)
-                    val userRepo = AppCtxtUtil.getBean(UserRepo::class)
-                    val user = userRepo.findById(paymentAccount.userId).orElseGet { null }
+                    val user = User.findById(paymentAccount.userId).orElseGet { null }
                     if (user != null && !user.realNameChecked) {
                         user.realName = paymentAccount.accountName
                         user.idCardNo = paymentAccount.idCardNo
                         user.realNameChecked = true
-                        userRepo.save(user)
+                        user.save()
                     }
                 }
             }
