@@ -38,7 +38,7 @@ class UserService {
         val ip = ClientInfoHolder.ip
         val hour = System.currentTimeMillis() / 1000 / 3600
         val limitKey = KeyTemplate.SMS_IP_LIMIT.fill(hour, ip)
-        val times = RedisUtil.increment(limitKey)
+        val times = RedisUtil.incr(limitKey)
         RedisUtil.expire(limitKey, 3600)
         if (times != null && times > 10) {
             throw BizException("获取验证码过于频繁，请在1小时后重试")
@@ -50,7 +50,7 @@ class UserService {
             (100000..999999).random().toString()
             // TODO 发送验证码
         }
-        RedisUtil.store(KeyTemplate.SMS_CODE.fill(realPhoneNo) to code, 60 * 5)
+        RedisUtil.set(KeyTemplate.SMS_CODE.fill(realPhoneNo) to code, 60 * 5)
         return realPhoneNo.substring(0, 3) + "****" + realPhoneNo.substring(7)
     }
 
@@ -66,7 +66,7 @@ class UserService {
         // 使用验证码
         if (code.isNotBlank()) {
             val smsCodeKey = KeyTemplate.SMS_CODE.fill(phoneNo)
-            val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
+            val sentCode = RedisUtil.get(smsCodeKey, String::class)
             if (code != sentCode) {
                 throw BizException("验证码不正确")
             }
@@ -109,7 +109,7 @@ class UserService {
         }
         // 生成TOKEN
         val token = DigestUtils.md5DigestAsHex((user.id.toString() + System.currentTimeMillis()).toByteArray())
-        RedisUtil.store(KeyTemplate.USER_TOKEN.fill(token) to user.id, 86400 * 7)
+        RedisUtil.set(KeyTemplate.USER_TOKEN.fill(token) to user.id, 86400 * 7)
         return LoginVO().apply {
             this.token = token
             this.hasPassword = password.isNotBlank() || hasPassword(user.id, UserPassword.Type.LOGIN)
@@ -174,7 +174,7 @@ class UserService {
                 // 使用短信验证
                 val user = User.findById(userId).orElseThrow()
                 val smsCodeKey = KeyTemplate.SMS_CODE.fill(user.phoneNo)
-                val sentCode = RedisUtil.getSingle(smsCodeKey, String::class)
+                val sentCode = RedisUtil.get(smsCodeKey, String::class)
                 if (code != sentCode) {
                     throw BizException("验证码不正确")
                 }

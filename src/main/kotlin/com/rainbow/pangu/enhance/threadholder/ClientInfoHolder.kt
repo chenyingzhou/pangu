@@ -2,7 +2,7 @@ package com.rainbow.pangu.enhance.threadholder
 
 import com.rainbow.pangu.constant.KeyTemplate
 import com.rainbow.pangu.constant.Platform
-import com.rainbow.pangu.util.RedisUtil.getSingle
+import com.rainbow.pangu.util.RedisUtil
 import org.springframework.util.DigestUtils
 import java.nio.charset.StandardCharsets
 
@@ -38,7 +38,7 @@ object ClientInfoHolder {
             val clientInfo = client.get()
             if (clientInfo.userId == 0 && clientInfo.token != "") {
                 try {
-                    clientInfo.userId = getSingle(KeyTemplate.USER_TOKEN.fill(token), Int::class) ?: 0
+                    clientInfo.userId = RedisUtil.get(KeyTemplate.USER_TOKEN.fill(token), Int::class) ?: 0
                 } catch (ignored: Throwable) {
                 }
             }

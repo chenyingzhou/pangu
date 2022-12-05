@@ -23,7 +23,7 @@ object RedisUtil {
      * @param expireTime 过期时间
      * @param randTime   浮动时间
      */
-    fun store(pairs: Map<String, Any>, expireTime: Long = 86400 * 30, randTime: Long = 0) {
+    fun set(pairs: Map<String, Any>, expireTime: Long = 86400 * 30, randTime: Long = 0) {
         val validRandTime = if (randTime > expireTime / 2) expireTime / 2 else randTime
         val map: MutableMap<String, String> = HashMap()
         pairs.forEach { (k, v) -> map[k] = toJson(v) }
@@ -49,8 +49,8 @@ object RedisUtil {
     /**
      * 保存键值对
      */
-    fun store(pair: Pair<String, Any>, expireTime: Long = 86400 * 30, randTime: Long = 0) {
-        store(mapOf(pair.first to pair.second), expireTime, randTime)
+    fun set(pair: Pair<String, Any>, expireTime: Long = 86400 * 30, randTime: Long = 0) {
+        set(mapOf(pair.first to pair.second), expireTime, randTime)
     }
 
     fun del(key: String): Boolean {
@@ -61,24 +61,24 @@ object RedisUtil {
         redisTemplate.delete(keys)
     }
 
-    fun increment(key: String): Long? {
-        return redisTemplate.opsForValue().increment(key)
+    fun incr(key: String, delta: Long = 1): Long? {
+        return redisTemplate.opsForValue().increment(key, delta)
     }
 
     fun expire(key: String, expireTime: Long) {
         redisTemplate.expire(key, expireTime, TimeUnit.SECONDS)
     }
 
-    fun getExpire(key: String): Long {
+    fun ttl(key: String): Long {
         return redisTemplate.getExpire(key, TimeUnit.SECONDS)
     }
 
-    fun <E : Any> getSingle(key: String, cls: KClass<E>): E? {
+    fun <E : Any> get(key: String, cls: KClass<E>): E? {
         val json = redisTemplate.opsForValue().get(key)
         return if (json != null) toObject(json, cls) else null
     }
 
-    fun <E : Any> getMulti(keys: Collection<String?>, cls: KClass<E>): List<E> {
+    fun <E : Any> get(keys: Collection<String>, cls: KClass<E>): List<E> {
         val objs: MutableList<E> = ArrayList()
         if (CollectionUtils.isEmpty(keys)) {
             return objs
@@ -136,7 +136,7 @@ object RedisUtil {
      * @param <E>     推荐使用Int|Long|String，不可使用复杂对象
      * @return member->score
     </E> */
-    fun <E> getScores(key: String, members: Iterable<E>): Map<E, Double> {
+    fun <E> zmScore(key: String, members: Iterable<E>): Map<E, Double> {
         val scoreMap: MutableMap<E, Double> = HashMap()
         val memberList = members.toList()
         val stringMemberList = memberList.map { it.toString() }
@@ -154,7 +154,7 @@ object RedisUtil {
      * @param scoreMap member->score
      * @param <E>      推荐使用Int|Long|String，不可使用复杂对象
     </E> */
-    fun <E> setScores(key: String, scoreMap: Map<E, Number>) {
+    fun <E> zAdd(key: String, scoreMap: Map<E, Number>) {
         val tuples: MutableSet<TypedTuple<String>> = HashSet()
         scoreMap.forEach { (k, v) -> tuples.add(DefaultTypedTuple(k.toString(), v.toDouble())) }
         if (tuples.size > 0) {

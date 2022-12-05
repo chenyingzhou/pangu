@@ -5,9 +5,6 @@ import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.HexUtil.toHex
 import com.rainbow.pangu.util.JacksonUtil.toObject
 import com.rainbow.pangu.util.RedisUtil
-import com.rainbow.pangu.util.RedisUtil.expire
-import com.rainbow.pangu.util.RedisUtil.getExpire
-import com.rainbow.pangu.util.RedisUtil.getSingle
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -34,27 +31,27 @@ class AsyncCacheAspect {
         val paramHex = toHex(sb.toString())
         val cacheKey = "ASYNC_CACHE:$className:$methodName:$paramHex"
         val timeout = asyncCache.timeout
-        var cacheResult = getSingle(cacheKey, String::class)
+        var cacheResult = RedisUtil.get(cacheKey, String::class)
         var result: Any? = null
         if (cacheResult == null) {
             val lockObject = SyncLockHelper.storeObject(cacheKey)
             // 防止缓存雪崩，由于相同的cacheKey并不是同一个对象，所以引入SyncLockHelper存储锁对象，保证相同cacheKey获取到同一个锁对象
             synchronized(lockObject) {
-                cacheResult = getSingle(cacheKey, String::class)
+                cacheResult = RedisUtil.get(cacheKey, String::class)
                 if (cacheResult == null) {
                     result = joinPoint.proceed()
-                    RedisUtil.store(cacheKey to result!!, timeout.toLong())
+                    RedisUtil.set(cacheKey to result!!, timeout.toLong())
                 }
             }
         } else {
-            val ttl = getExpire(cacheKey)
+            val ttl = RedisUtil.ttl(cacheKey)
             if (ttl <= timeout / 2) {
                 // 当缓存时间过半时，异步刷新缓存，并同时立即更新缓存时间，防止多个线程做无用功
-                expire(cacheKey, timeout.toLong())
+                RedisUtil.expire(cacheKey, timeout.toLong())
                 CompletableFuture.runAsync {
                     try {
                         val newResult = joinPoint.proceed()
-                        RedisUtil.store(cacheKey to newResult!!, timeout.toLong())
+                        RedisUtil.set(cacheKey to newResult!!, timeout.toLong())
                     } catch (ignored: Throwable) {
                     }
                 }

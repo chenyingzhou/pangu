@@ -35,7 +35,7 @@ class LoginCheckAspect {
             LockUtil.lockOrThrow(lockKey, 60)
         }
         // TOKEN续期
-        RedisUtil.store(KeyTemplate.USER_TOKEN.fill(ClientInfoHolder.token) to userId, 86400 * 7)
+        RedisUtil.set(KeyTemplate.USER_TOKEN.fill(ClientInfoHolder.token) to userId, 86400 * 7)
         return try {
             joinPoint.proceed()
         } finally {

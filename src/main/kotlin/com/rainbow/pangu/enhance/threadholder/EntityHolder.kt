@@ -124,7 +124,7 @@ object EntityHolder {
         fun <Entity : ActiveRecordEntity> find(entityClass: KClass<Entity>, ids: Iterable<Int>): List<Entity> {
             val keys: MutableList<String> = ArrayList()
             ids.forEach { keys.add(KeyTemplate.ENTITY.fill(entityClass.simpleName, it.toString())) }
-            return RedisUtil.getMulti(keys, entityClass)
+            return RedisUtil.get(keys, entityClass)
         }
 
         /**
@@ -136,7 +136,7 @@ object EntityHolder {
                 val cacheKey = KeyTemplate.ENTITY.fill(entityClass.simpleName, it.id.toString())
                 map[cacheKey] = it
             }
-            RedisUtil.store(map, expireTime, 300L)
+            RedisUtil.set(map, expireTime, 300L)
         }
 
         /**
