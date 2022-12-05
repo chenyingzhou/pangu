@@ -19,10 +19,22 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
     companion object {
         private val entityClassMap = ConcurrentHashMap<KClass<out ActiveRecordCompanion<*>>, KClass<*>>()
         private val repos = ConcurrentHashMap<KClass<*>, JpaRepository<*, Int>>()
-        fun <Entity : Any> repo(entityClass: KClass<Entity>): JpaRepository<Entity, Int> {
+        fun <Entity : ActiveRecordEntity> repo(entityClass: KClass<Entity>): JpaRepository<Entity, Int> {
             val repo = repos[entityClass]
                 ?: throw IllegalStateException("Did you forget to annotate ${entityClass.simpleName}\$Companion with @ActiveRecord?")
             return repo as JpaRepository<Entity, Int>
+        }
+
+        fun <Entity : ActiveRecordEntity> save(entity: Entity) {
+            val repo = repo(entity::class) as JpaRepository<Entity, Int>
+            repo.save(entity)
+            EntityHolder.del(entity::class, listOf(entity.id))
+        }
+
+        fun <Entity : ActiveRecordEntity> delete(entity: Entity) {
+            val repo = repo(entity::class) as JpaRepository<Entity, Int>
+            repo.delete(entity)
+            EntityHolder.del(entity::class, listOf(entity.id))
         }
     }
 
@@ -47,13 +59,13 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
     fun findById(id: Int): Optional<Entity> {
         val entityClass = entityClass()
         val repo = repo(entityClass)
-        val entities: List<Entity> = EntityHolder.find(entityClass, listOf(id))
+        val entities: List<Entity> = EntityHolder.get(entityClass, listOf(id))
         if (entities.isNotEmpty()) {
             return Optional.of(entities[0])
         }
         val optEntity = repo.findById(id)
         if (optEntity.isPresent) {
-            EntityHolder.saveCache(entityClass, listOf(optEntity.get()))
+            EntityHolder.set(entityClass, listOf(optEntity.get()))
         }
         return optEntity
     }
@@ -66,13 +78,13 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         val entityClass = entityClass()
         val repo = repo(entityClass)
         // 尽量从缓存获取，并得到未命中部分的ID
-        val entities = EntityHolder.find(entityClass, ids)
+        val entities = EntityHolder.get(entityClass, ids)
         val foundIds = entities.map { it.id }
         val missedIds = ids - foundIds.toSet()
         // 获取未命中部分并缓存
         val missedEntities = repo.findAllById(missedIds)
         entities.addAll(missedEntities)
-        EntityHolder.saveCache(entityClass, missedEntities)
+        EntityHolder.set(entityClass, missedEntities)
         // 若传入ids是列表，返回结果按传入id顺序排序
         entities.sortWith(Comparator.comparingInt { ids.indexOf(it.id) })
         return entities
@@ -88,7 +100,7 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         val entityClass = entityClass()
         val repo = repo(entityClass)
         val saved = repo.saveAll(entities)
-        EntityHolder.deleteCache(entityClass, entities.map { it.id })
+        EntityHolder.del(entityClass, entities.map { it.id })
         return saved
     }
 
@@ -96,21 +108,21 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         val entityClass = entityClass()
         val repo = repo(entityClass)
         repo.deleteById(id)
-        EntityHolder.deleteCache(entityClass, listOf(id))
+        EntityHolder.del(entityClass, listOf(id))
     }
 
     fun deleteAllById(ids: Iterable<Int>) {
         val entityClass = entityClass()
         val repo = repo(entityClass)
         repo.deleteAllById(ids)
-        EntityHolder.deleteCache(entityClass, ids)
+        EntityHolder.del(entityClass, ids)
     }
 
     fun deleteAll(entities: Iterable<Entity>) {
         val entityClass = entityClass()
         val repo = repo(entityClass)
         repo.deleteAll(entities)
-        EntityHolder.deleteCache(entityClass, entities.map { it.id })
+        EntityHolder.del(entityClass, entities.map { it.id })
     }
 
     // 以下查询不使用缓存

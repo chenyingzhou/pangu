@@ -1,11 +1,9 @@
 package com.rainbow.pangu.entity
 
-import com.rainbow.pangu.enhance.threadholder.EntityHolder
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDateTime
 import javax.persistence.*
 
@@ -51,15 +49,7 @@ abstract class ActiveRecordEntity {
         return "BaseEntity(id=$id, deleted=$deleted, version=$version, createdTime=$createdTime, updatedTime=$updatedTime)"
     }
 
-    fun save() {
-        val repository = ActiveRecordCompanion.repo(this::class) as JpaRepository<ActiveRecordEntity, Int>
-        repository.save(this)
-        EntityHolder.deleteCache(this::class, listOf(this.id))
-    }
+    fun save() = ActiveRecordCompanion.save(this)
 
-    fun delete() {
-        val repository = ActiveRecordCompanion.repo(this::class) as JpaRepository<ActiveRecordEntity, Int>
-        repository.delete(this)
-        EntityHolder.deleteCache(this::class, listOf(this.id))
-    }
+    fun delete() = ActiveRecordCompanion.delete(this)
 }

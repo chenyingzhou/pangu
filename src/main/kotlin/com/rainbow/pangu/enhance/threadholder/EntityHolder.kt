@@ -6,7 +6,7 @@ import com.rainbow.pangu.util.RedisUtil
 import kotlin.reflect.KClass
 
 /**
- * 实体内存缓存，同时管理redis缓存
+ * 管理线程内缓存，同时管理redis缓存
  */
 object EntityHolder {
     /**
@@ -17,14 +17,12 @@ object EntityHolder {
     /**
      * 存储的Entity对象 class -> id -> entity
      */
-    private val holder =
-        ThreadLocal.withInitial<MutableMap<KClass<ActiveRecordEntity>, MutableMap<Int, ActiveRecordEntity>>> { HashMap() }
+    private val holder = ThreadLocal.withInitial<MutableMap<KClass<*>, MutableMap<Int, Any>>> { HashMap() }
 
     /**
-     * enable为true时，即将删除的缓存保存在这里，线程结束时统一清理
+     * 即将删除的缓存保存在这里，线程结束时统一清理
      */
-    private val deleteCacheHolder =
-        ThreadLocal.withInitial<MutableMap<KClass<ActiveRecordEntity>, MutableSet<Int>>> { HashMap() }
+    private val deletedHolder = ThreadLocal.withInitial<MutableMap<KClass<*>, MutableSet<Int>>> { HashMap() }
 
     /**
      * 开启内存缓存，一般在处理请求和定时任务之前执行
@@ -40,43 +38,16 @@ object EntityHolder {
         enable.set(false)
         holder.get().clear()
         try {
-            deleteCacheHolder.get().forEach { EntityCacheManager.delete(it.key, it.value) }
+            deletedHolder.get().forEach { EntityCacheManager.del(it.key, it.value) }
         } finally {
-            deleteCacheHolder.get().clear()
+            deletedHolder.get().clear()
         }
     }
 
     /**
-     * 获取entity
+     * 暂存entity至当前线程
      */
-    fun <Entity : ActiveRecordEntity> find(entityClass: KClass<Entity>, ids: Iterable<Int>): MutableList<Entity> {
-        val entities: MutableList<Entity> = ArrayList()
-        val missedIds: MutableSet<Int> = HashSet()
-        // 从内存获取
-        val entityMap = holder.get()
-        for (id in ids) {
-            if (entityMap.containsKey(entityClass as KClass<ActiveRecordEntity>) && entityMap[entityClass]!!.containsKey(id)) {
-                entities.add(entityMap[entityClass]!![id]!! as Entity)
-            } else {
-                missedIds.add(id)
-            }
-        }
-        // 内存中未保存的，从缓存获取
-        val missedEntities = EntityCacheManager.find(entityClass, missedIds)
-        entities.addAll(missedEntities)
-        store(entityClass, missedEntities)
-        // 标记为需要删除缓存的数据，过滤之，以防当前删除/修改的数据从缓存拿到过期的值(缓存是延迟删除的)
-        if (deleteCacheHolder.get().containsKey(entityClass as KClass<ActiveRecordEntity>)) {
-            val deleteCacheIds: Set<Int> = deleteCacheHolder.get()[entityClass] ?: HashSet()
-            entities.removeIf { deleteCacheIds.contains(it.id) }
-        }
-        return entities
-    }
-
-    /**
-     * 暂存entity
-     */
-    private fun <Entity : ActiveRecordEntity> store(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
+    private fun <Entity : ActiveRecordEntity> hold(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
         if (!enable.get()) {
             return
         }
@@ -85,7 +56,7 @@ object EntityHolder {
             if (entity.id == 0) {
                 continue
             }
-            if (!entityMap.containsKey(entityClass as KClass<ActiveRecordEntity>)) {
+            if (!entityMap.containsKey(entityClass)) {
                 entityMap[entityClass] = HashMap()
             }
             entityMap[entityClass]!![entity.id] = entity
@@ -93,27 +64,60 @@ object EntityHolder {
     }
 
     /**
-     * 保存缓存并暂存entity
+     * 获取entity
      */
-    fun <Entity : ActiveRecordEntity> saveCache(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
-        store(entityClass, entities)
-        EntityCacheManager.store(entityClass, entities)
+    fun <Entity : ActiveRecordEntity> get(entityClass: KClass<Entity>, ids: Iterable<Int>): MutableList<Entity> {
+        val entities: MutableList<Entity> = ArrayList()
+        val missedIds: MutableSet<Int> = HashSet()
+        // 从内存获取
+        val entityMap = holder.get()
+        for (id in ids) {
+            if (entityMap[entityClass]?.get(id) != null) {
+                entities.add(entityMap[entityClass]!![id]!! as Entity)
+            } else {
+                missedIds.add(id)
+            }
+        }
+        // 内存中未保存的，从缓存获取
+        val missedEntities = EntityCacheManager.get(entityClass, missedIds)
+        entities.addAll(missedEntities)
+        hold(entityClass, missedEntities)
+        // 标记为需要删除缓存的数据，过滤之，以防当前删除/修改的数据从缓存拿到过期的值(缓存是延迟删除的)
+        if (deletedHolder.get().containsKey(entityClass)) {
+            val deleteCacheIds: Set<Int> = deletedHolder.get()[entityClass] ?: HashSet()
+            entities.removeIf { deleteCacheIds.contains(it.id) }
+        }
+        return entities
     }
 
     /**
-     * 删除缓存(如果开启了thread holder，则会延迟删除)
+     * 保存缓存并暂存entity
      */
-    fun <Entity : ActiveRecordEntity> deleteCache(entityClass: KClass<Entity>, ids: Iterable<Int>) {
-        if (!enable.get()) {
-            EntityCacheManager.delete(entityClass, ids)
-            return
-        }
-        val deleteCacheMap = deleteCacheHolder.get()
-        val exIds = deleteCacheMap.getOrDefault(entityClass as KClass<ActiveRecordEntity>, HashSet())
-        ids.forEach { exIds.add(it) }
-        deleteCacheMap[entityClass] = exIds
+    fun <Entity : ActiveRecordEntity> set(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
+        hold(entityClass, entities)
+        EntityCacheManager.set(entityClass, entities)
     }
 
+    /**
+     * 删除缓存(如果开启了holder，则延迟删除，并在线程内增加删除标记)
+     *
+     * 延迟删除，即在事务完成后删除缓存，相对于立即删除，能防止其他线程在此期间读取该数据，再次写入缓存，造成数据在较长时间内不一致；
+     * 同时，线程内的删除标记可以防止后续步骤读取该数据
+     */
+    fun <Entity : ActiveRecordEntity> del(entityClass: KClass<Entity>, ids: Iterable<Int>) {
+        if (!enable.get()) {
+            EntityCacheManager.del(entityClass, ids)
+            return
+        }
+        val deletedCacheMap = deletedHolder.get()
+        val exIds = deletedCacheMap.getOrDefault(entityClass, HashSet())
+        ids.forEach { exIds.add(it) }
+        deletedCacheMap[entityClass] = exIds
+    }
+
+    /**
+     * 管理Redis缓存
+     */
     private object EntityCacheManager {
 
         private const val expireTime: Long = 1800
@@ -121,7 +125,7 @@ object EntityHolder {
         /**
          * 从缓存获取entity
          */
-        fun <Entity : ActiveRecordEntity> find(entityClass: KClass<Entity>, ids: Iterable<Int>): List<Entity> {
+        fun <Entity : ActiveRecordEntity> get(entityClass: KClass<Entity>, ids: Iterable<Int>): List<Entity> {
             val keys: MutableList<String> = ArrayList()
             ids.forEach { keys.add(KeyTemplate.ENTITY.fill(entityClass.simpleName, it.toString())) }
             return RedisUtil.get(keys, entityClass)
@@ -130,7 +134,7 @@ object EntityHolder {
         /**
          * 缓存entity
          */
-        fun <Entity : ActiveRecordEntity> store(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
+        fun <Entity : ActiveRecordEntity> set(entityClass: KClass<Entity>, entities: Iterable<Entity>) {
             val map: MutableMap<String, ActiveRecordEntity> = HashMap()
             entities.forEach {
                 val cacheKey = KeyTemplate.ENTITY.fill(entityClass.simpleName, it.id.toString())
@@ -142,7 +146,7 @@ object EntityHolder {
         /**
          * 删除entity缓存
          */
-        fun <Entity : ActiveRecordEntity> delete(entityClass: KClass<Entity>, ids: Iterable<Int>) {
+        fun del(entityClass: KClass<*>, ids: Iterable<Int>) {
             val keys: MutableList<String> = ArrayList()
             ids.forEach { keys.add(KeyTemplate.ENTITY.fill(entityClass.simpleName, it.toString())) }
             RedisUtil.del(keys)
