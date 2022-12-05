@@ -83,38 +83,28 @@ class SpecBuilder<T : ActiveRecordEntity> {
         val specBuilder = this
         return object : Specification<T> {
             override fun toPredicate(root: Root<T>, query: CriteriaQuery<*>, builder: CriteriaBuilder): Predicate? {
-                genPredicate(specBuilder, root, query, builder)
-                if (selectFields.isNotEmpty()) {
-                    selectFields.forEach { query.select(root.get(it)) }
-                }
+                query.where(*genPredicate(specBuilder, root, builder))
+                selectFields.forEach { query.select(root[it]) }
                 return query.restriction
             }
 
             private fun genPredicate(
-                specBuilder: SpecBuilder<T>, root: Root<T>, query: CriteriaQuery<*>, builder: CriteriaBuilder
-            ) {
+                specBuilder: SpecBuilder<T>, root: Root<T>, builder: CriteriaBuilder
+            ): Array<Predicate> {
                 val predicates = ArrayList<Predicate>()
                 if (specBuilder.params.isNotEmpty()) {
-                    val predicatesArr = getPredicates(root, builder, specBuilder.params)
-                    predicates.add(builder.and(*predicatesArr.toTypedArray()))
+                    val predicatesArr = specBuilder.params.map { extracted(builder, it, root) }
+                    predicates.addAll(predicatesArr)
                 }
                 if (specBuilder.and.isNotEmpty()) {
-                    val predicateList =
-                        specBuilder.and.map { getPredicates(root, builder, it.params) }.flatMap { it.asIterable() }
-                    predicates.add(builder.and(*predicateList.toTypedArray()))
+                    val and = specBuilder.and.map { genPredicate(it, root, builder) }.flatMap { it.asIterable() }
+                    predicates.add(builder.and(*and.toTypedArray()))
                 }
                 if (specBuilder.or.isNotEmpty()) {
-                    val predicateList =
-                        specBuilder.or.map { builder.and(*getPredicates(root, builder, it.params).toTypedArray()) }
-                    predicates.add(builder.or(*predicateList.toTypedArray()))
+                    val or = specBuilder.or.map { genPredicate(it, root, builder) }.flatMap { it.asIterable() }
+                    predicates.add(builder.or(*or.toTypedArray()))
                 }
-                if (predicates.isNotEmpty()) {
-                    query.where(*predicates.toTypedArray())
-                }
-            }
-
-            private fun getPredicates(root: Root<T>, builder: CriteriaBuilder, params: List<Param>): List<Predicate> {
-                return params.map { extracted(builder, it, root) }
+                return predicates.toTypedArray()
             }
 
             private fun extracted(builder: CriteriaBuilder, param: Param, root: Root<T>): Predicate {
