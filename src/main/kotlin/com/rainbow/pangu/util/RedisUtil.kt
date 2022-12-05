@@ -24,25 +24,35 @@ object RedisUtil {
      * @param randTime   浮动时间
      */
     fun set(pairs: Map<String, Any>, expireTime: Long = 86400 * 30, randTime: Long = 0) {
-        val validRandTime = if (randTime > expireTime / 2) expireTime / 2 else randTime
         val map: MutableMap<String, String> = HashMap()
         pairs.forEach { (k, v) -> map[k] = toJson(v) }
-        redisTemplate.executePipelined { connection: RedisConnection ->
-            for ((k, v) in map) {
-                val finalRandTime = if (validRandTime > 0) Random().nextLong(validRandTime * 2) - validRandTime else 0
-                val finalTime = expireTime + finalRandTime
-                if (finalTime <= 0) {
-                    connection.set(k.toByteArray(), v.toByteArray())
-                } else {
+        // 未设置过期时间时，直接使用批量设置
+        if (expireTime <= 0) {
+            redisTemplate.opsForValue().multiSet(map)
+            return
+        }
+        // 分别计算每个key的过期时间
+        val validRandTime = if (randTime > expireTime / 2) expireTime / 2 else randTime
+        val expireTimeMap = map.mapValues {
+            val finalRandTime = if (validRandTime > 0) Random().nextLong(validRandTime * 2) - validRandTime else 0
+            expireTime + finalRandTime
+        }
+        if (map.size <= 5) {
+            // key数量不大于5时，循环设置
+            map.forEach { (k, v) -> redisTemplate.opsForValue().set(k, v, expireTimeMap[k]!!, TimeUnit.SECONDS) }
+        } else {
+            // key数量大于5时，使用pipeline
+            redisTemplate.executePipelined { connection: RedisConnection ->
+                map.forEach { (k, v) ->
                     connection.set(
                         k.toByteArray(),
                         v.toByteArray(),
-                        Expiration.from(finalTime, TimeUnit.SECONDS),
+                        Expiration.from(expireTimeMap[k]!!, TimeUnit.SECONDS),
                         RedisStringCommands.SetOption.UPSERT
                     )
                 }
+                null
             }
-            null
         }
     }
 

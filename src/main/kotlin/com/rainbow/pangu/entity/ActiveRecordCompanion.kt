@@ -57,17 +57,8 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
     }
 
     fun findById(id: Int): Optional<Entity> {
-        val entityClass = entityClass()
-        val repo = repo(entityClass)
-        val entities: List<Entity> = EntityHolder.get(entityClass, listOf(id))
-        if (entities.isNotEmpty()) {
-            return Optional.of(entities[0])
-        }
-        val optEntity = repo.findById(id)
-        if (optEntity.isPresent) {
-            EntityHolder.set(entityClass, listOf(optEntity.get()))
-        }
-        return optEntity
+        val entities = findAllById(listOf(id))
+        return Optional.ofNullable(entities.firstOrNull())
     }
 
     fun existsById(id: Int): Boolean {
@@ -88,12 +79,6 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
         // 若传入ids是列表，返回结果按传入id顺序排序
         entities.sortWith(Comparator.comparingInt { ids.indexOf(it.id) })
         return entities
-    }
-
-    fun findAll(): List<Entity> {
-        val entityClass = entityClass()
-        val repo = repo(entityClass)
-        return repo.findAll()
     }
 
     fun saveAll(entities: Iterable<Entity>): List<Entity> {
@@ -137,6 +122,12 @@ interface ActiveRecordCompanion<Entity : ActiveRecordEntity> {
             }
         }
         return spec.build()
+    }
+
+    fun findAll(): List<Entity> {
+        val entityClass = entityClass()
+        val repo = repo(entityClass)
+        return repo.findAll()
     }
 
     fun findOne(params: Map<KProperty1<Entity, Any>, Any>): Optional<Entity> {
