@@ -8,16 +8,16 @@ import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
 import java.time.LocalDateTime
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 
 @Entity
 @Where(clause = "deleted = false")
 @SQLDelete(sql = "update `goods` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "goods", comment = "商品")
-@javax.persistence.Table(name = "goods")
+@jakarta.persistence.Table(name = "goods")
 class Goods : ActiveRecordEntity() {
     @ActiveRecord
     companion object : ActiveRecordCompanion<Goods>

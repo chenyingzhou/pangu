@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.persistence.EntityManager
-import javax.persistence.PersistenceContext
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

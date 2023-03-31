@@ -5,13 +5,13 @@ import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Where(clause = "deleted = false")
 @SQLDelete(sql = "update `user_password` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "user_password", comment = "用户密码")
-@javax.persistence.Table(
+@jakarta.persistence.Table(
     name = "user_password",
     indexes = [
         Index(name = "idx_user_id", columnList = "userId"),

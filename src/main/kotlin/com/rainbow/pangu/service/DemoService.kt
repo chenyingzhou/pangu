@@ -6,7 +6,7 @@ import com.rainbow.pangu.model.param.converter.DemoParamConv
 import com.rainbow.pangu.model.vo.DemoVO
 import com.rainbow.pangu.model.vo.converter.DemoVOConv
 import org.springframework.stereotype.Service
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])

@@ -5,15 +5,15 @@ import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Index
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Index
 
 @Entity
 @Where(clause = "deleted = false")
 @SQLDelete(sql = "update `goods_item` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "goods_item", comment = "资产")
-@javax.persistence.Table(
+@jakarta.persistence.Table(
     name = "goods_item",
     indexes = [
         Index(name = "idx_goods_id", columnList = "goodsId"),

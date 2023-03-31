@@ -16,8 +16,8 @@ import com.rainbow.pangu.util.LockUtil
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import javax.annotation.Resource
-import javax.transaction.Transactional
+import jakarta.annotation.Resource
+import jakarta.transaction.Transactional
 import kotlin.math.absoluteValue
 
 @Service

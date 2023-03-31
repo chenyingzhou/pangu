@@ -5,14 +5,14 @@ import org.hibernate.annotations.Comment
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.Table
 import org.hibernate.annotations.Where
-import javax.persistence.Column
-import javax.persistence.Entity
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
 
 @Entity
 @Where(clause = "deleted = 0")
 @SQLDelete(sql = "update `demo` set `deleted` = true, `version` = `version` + 1 where `id` = ? and `version` = ?")
 @Table(appliesTo = "demo", comment = "DEMO")
-@javax.persistence.Table(name = "demo")
+@jakarta.persistence.Table(name = "demo")
 class Demo : ActiveRecordEntity() {
     @ActiveRecord
     companion object : ActiveRecordCompanion<Demo>

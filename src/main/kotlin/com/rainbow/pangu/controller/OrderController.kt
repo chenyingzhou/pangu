@@ -11,7 +11,7 @@ import com.rainbow.pangu.service.OrderService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
-import javax.annotation.Resource
+import jakarta.annotation.Resource
 
 @RestController
 @Tag(name = "订单")

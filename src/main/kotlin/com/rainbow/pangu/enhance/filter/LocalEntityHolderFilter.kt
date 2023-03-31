@@ -3,7 +3,7 @@ package com.rainbow.pangu.enhance.filter
 import com.rainbow.pangu.enhance.threadholder.EntityHolder
 import org.springframework.stereotype.Component
 import java.io.IOException
-import javax.servlet.*
+import jakarta.servlet.*
 
 @Component
 class LocalEntityHolderFilter : Filter {

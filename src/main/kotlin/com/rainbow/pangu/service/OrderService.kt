@@ -15,8 +15,8 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import javax.annotation.Resource
-import javax.transaction.Transactional
+import jakarta.annotation.Resource
+import jakarta.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])

@@ -18,7 +18,7 @@ import com.rainbow.pangu.util.EnvUtil
 import com.rainbow.pangu.util.RedisUtil
 import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])

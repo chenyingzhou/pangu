@@ -14,8 +14,8 @@ import com.rainbow.pangu.util.AppCtxtUtil
 import com.rainbow.pangu.util.PaymentUtil
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import javax.annotation.Resource
-import javax.transaction.Transactional
+import jakarta.annotation.Resource
+import jakarta.transaction.Transactional
 
 @Service
 @Transactional(rollbackOn = [Exception::class])

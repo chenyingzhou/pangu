@@ -1,6 +1,6 @@
 package com.rainbow.pangu.util
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 object IpUtil {
     private const val proxyRealIpAuth = "2GxmrmLBTyE6QllFIxOXwfgTLv17Hi3d"

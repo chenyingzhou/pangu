@@ -7,7 +7,7 @@ import com.rainbow.pangu.service.UnsoldService
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
-import javax.annotation.Resource
+import jakarta.annotation.Resource
 
 @Component
 class UnsoldSchedule {
