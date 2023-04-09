@@ -1,21 +1,21 @@
 package com.rainbow.pangu.util
 
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
+import org.springframework.beans.factory.BeanFactory
+import org.springframework.beans.factory.BeanFactoryAware
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 @Component
-object BeanUtil : ApplicationContextAware {
+object BeanUtil : BeanFactoryAware {
 
-    private lateinit var applicationContext: ApplicationContext
+    private lateinit var beanFactory: BeanFactory
 
-    override fun setApplicationContext(applicationContext: ApplicationContext) {
-        this.applicationContext = applicationContext
+    override fun setBeanFactory(beanFactory: BeanFactory) {
+        this.beanFactory = beanFactory
     }
 
     fun <T : Any> getBean(clazz: KClass<T>): T {
-        return applicationContext.getBean(clazz.java)
+        return beanFactory.getBean(clazz.java)
     }
 
 }
