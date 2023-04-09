@@ -1,14 +1,24 @@
 package com.rainbow.pangu.entity
 
+import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
-import jakarta.persistence.*
 
 @MappedSuperclass
 abstract class ActiveRecordEntity {
+//    // 批量插入配置
+//    @TableGenerator(
+//        name = "ID_GENERATOR",
+//        table = "_id_generator",
+//        pkColumnName = "table_name",
+//        valueColumnName = "next_val",
+//        allocationSize = 20,
+//        initialValue = 0
+//    )
+//    @GeneratedValue(strategy = GenerationType.TABLE, generator = "ID_GENERATOR")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, columnDefinition = "int")
