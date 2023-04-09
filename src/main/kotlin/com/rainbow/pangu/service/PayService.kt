@@ -10,7 +10,7 @@ import com.rainbow.pangu.model.vo.converter.PaymentAccountVOConv
 import com.rainbow.pangu.model.vo.converter.PaymentBankVOConv
 import com.rainbow.pangu.model.vo.converter.PaymentMethodVOConv
 import com.rainbow.pangu.service.payment.PaymentExecutor
-import com.rainbow.pangu.util.AppCtxtUtil
+import com.rainbow.pangu.util.BeanUtil
 import com.rainbow.pangu.util.PaymentUtil
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -72,13 +72,13 @@ class PayService {
                 }
             }
             // 更新订单状态(耦合)
-            val orderService = AppCtxtUtil.getBean(OrderService::class)
+            val orderService = BeanUtil.getBean(OrderService::class)
             val orderInfoOpt = OrderInfo.findOne(OrderInfo::orderNo to paymentOrder.orderNo)
             if (orderInfoOpt.isPresent) {
                 orderService.paid(orderInfoOpt.get())
             }
             // 更新充值状态(耦合)
-            val balanceService = AppCtxtUtil.getBean(BalanceService::class)
+            val balanceService = BeanUtil.getBean(BalanceService::class)
             val balanceBillOpt = BalanceBill.findOne(BalanceBill::billNo to paymentOrder.orderNo)
             if (balanceBillOpt.isPresent) {
                 balanceService.check(balanceBillOpt.get())

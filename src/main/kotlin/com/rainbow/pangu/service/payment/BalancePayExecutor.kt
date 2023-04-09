@@ -7,13 +7,13 @@ import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.model.param.PayParam
 import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.service.BalanceService
-import com.rainbow.pangu.util.AppCtxtUtil
+import com.rainbow.pangu.util.BeanUtil
 import com.rainbow.pangu.util.KeyUtil
 import org.springframework.stereotype.Service
 
 @Service
 class BalancePayExecutor : PaymentExecutor {
-    val balanceService: BalanceService by lazy { AppCtxtUtil.getBean(BalanceService::class) }
+    val balanceService: BalanceService by lazy { BeanUtil.getBean(BalanceService::class) }
 
     override val type: PaymentMethod.Type
         get() = PaymentMethod.Type.BALANCE

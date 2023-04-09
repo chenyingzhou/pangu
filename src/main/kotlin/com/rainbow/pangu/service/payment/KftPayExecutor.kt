@@ -14,7 +14,7 @@ import com.rainbow.pangu.model.vo.PaymentOrderUnverifiedVO
 import com.rainbow.pangu.util.JacksonUtil
 import com.rainbow.pangu.util.KeyUtil
 import com.rainbow.pangu.util.PaymentUtil
-import com.rainbow.pangu.util.AppCtxtUtil
+import com.rainbow.pangu.util.BeanUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -29,7 +29,7 @@ class KftPayExecutor : PaymentExecutor {
     private val methodVersion = "1.0.0-PRD"
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    val kftConfig: KftConfig by lazy { AppCtxtUtil.getBean(KftConfig::class) }
+    val kftConfig: KftConfig by lazy { BeanUtil.getBean(KftConfig::class) }
     val signProvider: SignProvider by lazy {
         val keyStorePassword = kftConfig.keyStorePassword.toCharArray()
         val keyPassword = kftConfig.keyPassword.toCharArray()

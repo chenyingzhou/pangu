@@ -5,7 +5,7 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import java.util.concurrent.TimeUnit
 
 object LockUtil {
-    private val redisTemplate by lazy { AppCtxtUtil.getBean(StringRedisTemplate::class) }
+    private val redisTemplate by lazy { BeanUtil.getBean(StringRedisTemplate::class) }
     private const val prefix = "lock:"
     private const val defaultMsg = "操作太频繁"
     private const val defaultExpire = 10

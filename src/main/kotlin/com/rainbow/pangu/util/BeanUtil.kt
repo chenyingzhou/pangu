@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 @Component
-object AppCtxtUtil : ApplicationContextAware {
+object BeanUtil : ApplicationContextAware {
 
     private lateinit var applicationContext: ApplicationContext
 

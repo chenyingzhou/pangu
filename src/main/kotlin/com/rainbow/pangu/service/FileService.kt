@@ -6,7 +6,7 @@ import com.aliyun.oss.model.PutObjectRequest
 import com.rainbow.pangu.config.OssConfig
 import com.rainbow.pangu.exception.BizException
 import com.rainbow.pangu.util.HexUtil
-import com.rainbow.pangu.util.AppCtxtUtil
+import com.rainbow.pangu.util.BeanUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 class FileService {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
     private val timePathFormatter = DateTimeFormatter.ofPattern("yyyyMMdd/HHmmss-")
-    private val ossConfig: OssConfig by lazy { AppCtxtUtil.getBean(OssConfig::class) }
+    private val ossConfig: OssConfig by lazy { BeanUtil.getBean(OssConfig::class) }
     private val ossClient: OSS by lazy {
         OSSClientBuilder().build(ossConfig.endpoint, ossConfig.accessKeyId, ossConfig.accessKeySecret)
     }

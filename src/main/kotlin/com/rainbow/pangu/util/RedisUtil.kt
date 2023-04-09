@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 object RedisUtil {
-    private val redisTemplate by lazy { AppCtxtUtil.getBean(StringRedisTemplate::class) }
+    private val redisTemplate by lazy { BeanUtil.getBean(StringRedisTemplate::class) }
 
     /**
      * 保存键值对，最终过期时间为 expireTime + rand(-randTime, randTime)
