@@ -22,9 +22,4 @@ object DateTimeUtil {
     fun parseTimestamp(timestamp: Long): LocalDateTime {
         return LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.ofTotalSeconds(8 * 3600))
     }
-
-    fun parseTimeMill(timeMill: Long): LocalDateTime {
-        val nano = (timeMill % 1000).toInt()
-        return LocalDateTime.ofEpochSecond(timeMill / 1000, nano, ZoneOffset.ofTotalSeconds(8 * 3600))
-    }
 }
